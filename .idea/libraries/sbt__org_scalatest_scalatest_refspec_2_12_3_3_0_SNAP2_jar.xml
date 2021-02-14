@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="sbt: org.scalatest:scalatest-refspec_2.12:3.3.0-SNAP2:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/AppData/Local/Coursier/cache/v1/https/mirrors.huaweicloud.com/repository/maven/org/scalatest/scalatest-refspec_2.12/3.3.0-SNAP2/scalatest-refspec_2.12-3.3.0-SNAP2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/AppData/Local/Coursier/cache/v1/https/mirrors.huaweicloud.com/repository/maven/org/scalatest/scalatest-refspec_2.12/3.3.0-SNAP2/scalatest-refspec_2.12-3.3.0-SNAP2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/AppData/Local/Coursier/cache/v1/https/mirrors.huaweicloud.com/repository/maven/org/scalatest/scalatest-refspec_2.12/3.3.0-SNAP2/scalatest-refspec_2.12-3.3.0-SNAP2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

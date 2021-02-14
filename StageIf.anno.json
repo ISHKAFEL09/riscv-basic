@@ -1,0 +1,10 @@
+[
+  {
+    "class":"firrtl.options.OutputAnnotationFileAnnotation",
+    "file":"StageIf"
+  },
+  {
+    "class":"firrtl.options.TargetDirAnnotation",
+    "directory":"."
+  }
+]

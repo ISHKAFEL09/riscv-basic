@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="sbt 1" modules="chiselprj">
+      <option name="implicitConversions" value="true" />
+      <parameters>
+        <parameter value="-Xsource:2.11" />
+      </parameters>
+    </profile>
+    <profile name="sbt 2" modules="ChiselPrj">
+      <parameters>
+        <parameter value="-Xsource:2.11" />
+      </parameters>
+      <plugins>
+        <plugin path="C:\Users\Administrator\AppData\Local\Coursier\cache\v1\https\mirrors.huaweicloud.com\repository\maven\org\scalamacros\paradise_2.12.1\2.1.0\paradise_2.12.1-2.1.0.jar" />
+      </plugins>
+    </profile>
+  </component>
+</project>
