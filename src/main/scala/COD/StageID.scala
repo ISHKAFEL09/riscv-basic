@@ -84,7 +84,7 @@ class StageID(implicit conf: GenConfig) extends Module {
   val regPipe = RegInit(0.U.asTypeOf(new IDPipeIO()))
   when (flush) {
     regPipe := 0.U.asTypeOf(new IDPipeIO())
-    regPipe.instr := Const.Instruction.BUBBLE
+    regPipe.instr := Const.BUBBLE.U
   } .elsewhen (!stall) {
     regPipe.instr := instruction
     regPipe.pc := io.lastPipe.pc

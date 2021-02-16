@@ -97,16 +97,23 @@ class CODTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
 
   it should "pass control test" in {
     test(new Control).withAnnotations(Seq(WriteVcdAnnotation)) { c =>
-      val instr = "h03ff0a63".U
+      val instr = "h04c0006f".U
+//      val instr = Const.BUBBLE.U
       c.io.instr.poke(instr)
       c.io.valid.poke(true.B)
       c.io.branchEval.poke(true.B)
       c.clock.step(1)
       val decode = c.io.decode.peek()
       println(f"instr: ${instr.litValue()}%x")
-      println(f"aluop:${decode.aluOp.litValue()}%x")
-      println(f"pcSrc:${decode.pcSrc.litValue()}%x")
-      println(f"brType:${decode.brType.litValue()}%x")
+      println(f"aluOp: ${decode.aluOp.litValue()}%x")
+      println(f"pcSrc: ${decode.pcSrc.litValue()}%x")
+      println(f"wbSrc: ${decode.wbSrc.litValue()}%x")
+      println(f"aluSrc1: ${decode.aluSrc1.litValue()}%x")
+      println(f"aluSrc2: ${decode.aluSrc2.litValue()}%x")
+      println(f"rfWen: ${decode.rfWen.litValue()}%x")
+      println(f"memRen: ${decode.memRen.litValue()}%x")
+      println(f"memWen: ${decode.memWen.litValue()}%x")
+      println(f"brType: ${decode.brType.litValue()}%x")
     }
   }
 }

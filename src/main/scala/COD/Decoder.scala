@@ -20,6 +20,7 @@ class Decoder extends Module {
       //   instrType        aluOpType      flag
       List(InstrType.typeN, AluOpType.add, InstrFlag.isBranch),
     Array(
+      Instruction.BUBBLE -> List(InstrType.typeR, AluOpType.add, 0.U),
       Instruction.ADD -> List(InstrType.typeR, AluOpType.add, 0.U),
       Instruction.ADDI -> List(InstrType.typeI, AluOpType.add, 0.U),
       Instruction.LW -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad),
@@ -39,7 +40,7 @@ class Decoder extends Module {
 
   io.decode.aluOp := aluOpType
 
-  io.decode.brType := MuxCase(BranchSel.nob, Seq(
+  io.decode.brType := MuxCase(BranchSel.nop, Seq(
     (io.instr === Instruction.BEQ) -> BranchSel.beq
   ))
 

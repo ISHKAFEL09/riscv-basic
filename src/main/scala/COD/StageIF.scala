@@ -59,13 +59,13 @@ class StageIF(implicit conf: GenConfig) extends Module
   val regPipe = RegInit({
     val pipeIO = Wire(new IFPipeIO())
     pipeIO.pc := 0.U
-    pipeIO.instr := BUBBLE
+    pipeIO.instr := Const.BUBBLE.U
     pipeIO
   })
 
   when (io.ctrlIO.flush) {
     regPipe.pc := 0.U
-    regPipe.instr := BUBBLE
+    regPipe.instr := Const.BUBBLE.U
   } .elsewhen (!io.ctrlIO.stall) {
     regPipe.pc := pc
     regPipe.instr := instr

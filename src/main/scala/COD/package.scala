@@ -15,7 +15,7 @@ package object COD {
     }
 
     object BranchSel {
-      val beq :: bne :: blt :: bge :: nob :: Nil = Enum(5)
+      val nop :: beq :: bne :: blt :: bge :: Nil = Enum(5)
     }
 
     object AluSrc {
@@ -23,7 +23,7 @@ package object COD {
     }
 
     object WbSrc {
-      val mem :: alu :: Nil = Enum(2)
+      val alu :: mem :: Nil = Enum(2)
     }
 
     object MemoryOp {
@@ -45,8 +45,10 @@ package object COD {
       val isStore = (1 << 2).U
     }
 
+    val BUBBLE = "b0000_0000_0000_0000_0100_0000_0011_0011"
+
     object Instruction {
-      val BUBBLE             = "h4033".U(xprWidth)
+      val BUBBLE             = BitPat(Const.BUBBLE)
       val BEQ                = BitPat("b?????????????????000?????1100011")
       val BNE                = BitPat("b?????????????????001?????1100011")
       val BLT                = BitPat("b?????????????????100?????1100011")
