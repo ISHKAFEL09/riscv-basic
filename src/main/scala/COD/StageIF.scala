@@ -8,12 +8,13 @@ import Const.Instruction._
 class IFCtrlIO extends Bundle {
   val flush = Input(Bool())
   val stall = Input(Bool())
-  val pcSel = Input(UInt(4.W))
+  val pcSel = Input(UInt(ctrlSize))
 }
 
 class IFPipeIO extends Bundle {
   val pc = Output(UInt(xprWidth))
-  val instr = Output(UInt(xprWidth))
+  val instr = Output(UInt(32.W))
+  val valid = Output(Bool())
 }
 
 class IFMiscIO extends Bundle {
@@ -45,7 +46,7 @@ class StageIF(implicit conf: GenConfig) extends Module
     pc := pcNext
   }
 
-  val instr = Wire(UInt(xprWidth))
+  val instr = Wire(UInt(32.W))
   if (conf.innerIMem) {
     val bs = (0 until 100).map(i => i.U)
     val iMem = VecInit(bs)
@@ -68,6 +69,12 @@ class StageIF(implicit conf: GenConfig) extends Module
   } .elsewhen (!io.ctrlIO.stall) {
     regPipe.pc := pc
     regPipe.instr := instr
+  }
+
+  when (io.ctrlIO.stall || io.ctrlIO.flush) {
+    regPipe.valid := false.B
+  } .otherwise {
+    regPipe.valid := true.B
   }
 
   io.pipeIO := regPipe

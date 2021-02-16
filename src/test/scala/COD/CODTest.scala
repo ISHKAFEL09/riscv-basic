@@ -94,4 +94,19 @@ class CODTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       }.join()
     }
   }
+
+  it should "pass control test" in {
+    test(new Control).withAnnotations(Seq(WriteVcdAnnotation)) { c =>
+      val instr = "h03ff0a63".U
+      c.io.instr.poke(instr)
+      c.io.valid.poke(true.B)
+      c.io.branchEval.poke(true.B)
+      c.clock.step(1)
+      val decode = c.io.decode.peek()
+      println(f"instr: ${instr.litValue()}%x")
+      println(f"aluop:${decode.aluOp.litValue()}%x")
+      println(f"pcSrc:${decode.pcSrc.litValue()}%x")
+      println(f"brType:${decode.brType.litValue()}%x")
+    }
+  }
 }

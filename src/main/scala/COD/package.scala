@@ -18,9 +18,31 @@ package object COD {
       val beq :: bne :: blt :: bge :: nob :: Nil = Enum(5)
     }
 
+    object AluSrc {
+      val rf :: imm :: Nil = Enum(2)
+    }
+
+    object WbSrc {
+      val mem :: alu :: Nil = Enum(2)
+    }
+
     object MemoryOp {
       val mt_x :: mt_b :: mt_h :: mt_w :: mt_d :: mt_bu :: mt_hu :: mt_wu :: Nil = Enum(8)
       val m_x :: m_xrd :: m_xwr :: Nil = Enum(3)
+    }
+
+    object InstrType {
+      val typeN :: typeR :: typeI :: typeS :: typeB :: typeU :: typeJ :: Nil = Enum(7)
+    }
+
+    object AluOpType {
+      val add :: sub :: and :: or :: xor :: bypass1 :: bypass2 :: nop :: Nil = Enum(8)
+    }
+
+    object InstrFlag {
+      val isBranch = (1 << 0).U
+      val isLoad = (1 << 1).U
+      val isStore = (1 << 2).U
     }
 
     object Instruction {

@@ -4,19 +4,23 @@ import chisel3._
 
 class DecodeIO extends Bundle {
   val pcSrc = UInt(ctrlSize)
-  val aluSrc = UInt(ctrlSize)
+  val aluSrc1 = UInt(ctrlSize)
+  val aluSrc2 = UInt(ctrlSize)
   val aluOp = UInt(ctrlSize)
-  val regWr = Bool()
-  val memWr = Bool()
-  val memRd = Bool()
-  val regSrc = UInt(ctrlSize)
-  val brSrc = UInt(ctrlSize)
+  val rfWen = Bool()
+  val memWen = Bool()
+  val memRen = Bool()
+  val wbSrc = UInt(ctrlSize)
+  val brType = UInt(ctrlSize)
 }
 
 //class HazardIO extends Bundle {}
 
 class CtrlIO extends Bundle {
-  val instr = Input(UInt(xprWidth))
+  val valid = Input(Bool())
+  val instr = Input(UInt(32.W))
+  val branchEval = Input(Bool())
+
   val decode = Output(new DecodeIO())
   val forward = new ForwardIO
 //  val hazard = new HazardIO
@@ -29,8 +33,16 @@ class CtrlIO extends Bundle {
 class Control extends Module {
   val io = IO(new CtrlIO)
 
-  val forwardUnit = new ForwardUnit
+  io := DontCare
+
+  val forwardUnit = Module(new ForwardUnit)
   forwardUnit.io.f2wb <> io.forward.f2wb
   forwardUnit.io.f2mem <> io.forward.f2mem
   forwardUnit.io.f2id <> io.forward.f2id
+
+  val decoder = Module(new Decoder)
+  decoder.io.valid <> io.valid
+  decoder.io.instr <> io.instr
+  decoder.io.branchEval <> io.branchEval
+  decoder.io.decode <> io.decode
 }

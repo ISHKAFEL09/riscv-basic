@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util.{MuxCase, MuxLookup}
 
 class Forward2IDIO extends Bundle {
-  val instr = Input(UInt(xprWidth))
+  val instr = Input(UInt(32.W))
   val rs1Data = Input(UInt(xprWidth))
   val rs2Data = Input(UInt(xprWidth))
   val aluOp1 = Output(UInt(xprWidth))
@@ -12,7 +12,7 @@ class Forward2IDIO extends Bundle {
 }
 
 class Forward2MemWBIO extends Bundle {
-  val instr = Input(UInt(xprWidth))
+  val instr = Input(UInt(32.W))
   val ctrl = Input(new DecodeIO)
   val wbData = Input(UInt(xprWidth))
 }
@@ -30,9 +30,9 @@ class ForwardUnit extends Module {
   val rs2 = io.f2id.instr(24, 20)
   val rdMem = io.f2mem.instr(11, 7)
   val rdWB = io.f2wb.instr(11, 7)
-  val wrEnMem = io.f2mem.ctrl.regWr
-  val wrEnWB = io.f2wb.ctrl.regWr
-  val isLoad = io.f2mem.ctrl.memRd
+  val wrEnMem = io.f2mem.ctrl.rfWen
+  val wrEnWB = io.f2wb.ctrl.rfWen
+  val isLoad = io.f2mem.ctrl.memRen
 
   val hazardRs1Mem = (rs1 === rdMem) && wrEnMem && (!isLoad)
   val hazardRs2Mem = (rs2 === rdMem) && wrEnMem && (!isLoad)

@@ -14,13 +14,14 @@ class IDMiscIO extends Bundle {
 
 class IDPipeIO extends Bundle {
   val pc = Output(UInt(xprWidth))
-  val instr = Output(UInt(xprWidth))
+  val instr = Output(UInt(32.W))
   val aluOp1 = Output(UInt(xprWidth))
   val aluOp2 = Output(UInt(xprWidth))
 }
 
 class IDCtrlIO extends Bundle {
-  val instr = Output(UInt(xprWidth))
+  val instr = Output(UInt(32.W))
+  val branchEval = Output(Bool())
   val decode = Input(new DecodeIO)
   val forward = Flipped(new Forward2IDIO)
 }
@@ -35,6 +36,8 @@ class StageID(implicit conf: GenConfig) extends Module {
     val pipeCtrl = Output(new DecodeIO)
   })
   io := DontCare
+
+  val valid = io.lastPipe.valid
 
   // registers file
   val regFile = Module(new Registers())
