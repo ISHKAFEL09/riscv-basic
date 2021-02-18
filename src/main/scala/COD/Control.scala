@@ -12,6 +12,8 @@ class DecodeIO extends Bundle {
   val memRen = Bool()
   val wbSrc = UInt(ctrlSize)
   val brType = UInt(ctrlSize)
+  val isCsr = Bool()
+  val immType = UInt(ctrlSize)
 }
 
 //class HazardIO extends Bundle {}

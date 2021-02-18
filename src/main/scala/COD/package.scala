@@ -19,7 +19,7 @@ package object COD {
     }
 
     object AluSrc {
-      val rf :: imm :: Nil = Enum(2)
+      val rf :: imm :: pc :: csr :: Nil = Enum(4)
     }
 
     object WbSrc {
@@ -36,13 +36,19 @@ package object COD {
     }
 
     object AluOpType {
-      val add :: sub :: and :: or :: xor :: bypass1 :: bypass2 :: nop :: Nil = Enum(8)
+      val add :: sub :: and :: or :: xor :: bypass1 :: bypass2 :: lshift :: rshift :: rshifta :: nop :: Nil = Enum(11)
     }
 
     object InstrFlag {
       val isBranch = (1 << 0).U
       val isLoad = (1 << 1).U
       val isStore = (1 << 2).U
+      val isCsr = (1 << 3).U
+      val isJump = (1 << 4).U
+    }
+
+    object immType {
+      val typeI :: typeB :: typeS :: typeU :: typeJ :: Nil = Enum(5)
     }
 
     val BUBBLE = "b0000_0000_0000_0000_0100_0000_0011_0011"

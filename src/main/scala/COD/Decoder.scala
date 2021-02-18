@@ -27,15 +27,19 @@ class Decoder extends Module {
       Instruction.SW -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore),
       Instruction.BEQ -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
       Instruction.LUI -> List(InstrType.typeU, AluOpType.bypass2, 0.U),
-      Instruction.JAL -> List(InstrType.typeJ, AluOpType.add, InstrFlag.isBranch)
+      Instruction.JAL -> List(InstrType.typeJ, AluOpType.add, InstrFlag.isJump)
     )
   )
 
   val instrType :: aluOpType :: instrFlag :: Nil = decLevel0
   when (io.valid) { assert(instrType =/= InstrType.typeN, "Unknown instr") }
 
+  def hasFlag(flag: UInt): Bool = {
+    (instrFlag & flag).orR()
+  }
+
   io.decode.pcSrc := MuxCase(PCSel.plus4, Seq(
-    (io.branchEval && (instrFlag & InstrFlag.isBranch).orR()) -> PCSel.jump
+    (io.branchEval && hasFlag(InstrFlag.isBranch)) -> PCSel.jump
   ))
 
   io.decode.aluOp := aluOpType
@@ -44,17 +48,21 @@ class Decoder extends Module {
     (io.instr === Instruction.BEQ) -> BranchSel.beq
   ))
 
-  io.decode.memRen := (instrFlag & InstrFlag.isLoad).orR()
-  io.decode.memWen := (instrFlag & InstrFlag.isStore).orR()
+  io.decode.memRen := hasFlag(InstrFlag.isLoad)
+  io.decode.memWen := hasFlag(InstrFlag.isStore)
 
   io.decode.rfWen := !(instrType === InstrType.typeB || instrType === InstrType.typeS)
 
   io.decode.aluSrc1 := AluSrc.rf
-  io.decode.aluSrc2 := MuxLookup(instrType, AluSrc.rf, Seq(
-    InstrType.typeI -> AluSrc.imm,
-    InstrType.typeU -> AluSrc.imm,
-    InstrType.typeJ -> AluSrc.imm
+  io.decode.aluSrc2 := MuxCase(AluSrc.rf, Seq(
+    (instrType === InstrType.typeI) -> AluSrc.imm,
+    (instrType === InstrType.typeU) -> AluSrc.imm,
+    (instrType === InstrType.typeJ) -> AluSrc.imm,
+    hasFlag(InstrFlag.isJump) -> AluSrc.pc,
+    hasFlag(InstrFlag.isCsr) -> AluSrc.csr
   ))
 
   io.decode.wbSrc := Mux(io.decode.memRen, WbSrc.mem, WbSrc.alu)
+
+  io.decode.isCsr := hasFlag(InstrFlag.isCsr)
 }
