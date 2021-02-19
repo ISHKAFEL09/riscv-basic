@@ -20,14 +20,55 @@ class Decoder extends Module {
       //   instrType        aluOpType      flag
       List(InstrType.typeN, AluOpType.add, InstrFlag.isBranch),
     Array(
-      Instruction.BUBBLE -> List(InstrType.typeR, AluOpType.add, 0.U),
-      Instruction.ADD -> List(InstrType.typeR, AluOpType.add, 0.U),
-      Instruction.ADDI -> List(InstrType.typeI, AluOpType.add, 0.U),
+      Instruction.BUBBLE -> List(InstrType.typeR, AluOpType.add, InstrFlag.nop),
+
+      Instruction.ADDI -> List(InstrType.typeI, AluOpType.add, InstrFlag.nop),
+      Instruction.SLTI -> List(InstrType.typeI, AluOpType.comp, InstrFlag.nop),
+      Instruction.SLTIU -> List(InstrType.typeI, AluOpType.compu, InstrFlag.nop),
+      Instruction.ANDI -> List(InstrType.typeI, AluOpType.and, InstrFlag.nop),
+      Instruction.ORI -> List(InstrType.typeI, AluOpType.or, InstrFlag.nop),
+      Instruction.XORI -> List(InstrType.typeI, AluOpType.xor, InstrFlag.nop),
+
+      Instruction.SLLI -> List(InstrType.typeS, AluOpType.lshift, InstrFlag.isStore),
+      Instruction.SRLI -> List(InstrType.typeS, AluOpType.rshift, InstrFlag.isStore),
+      Instruction.SRAI -> List(InstrType.typeS, AluOpType.rshifta, InstrFlag.isStore),
+
+      Instruction.LUI -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.nop),
+      Instruction.AUIPC -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.nop),
+
+      Instruction.ADD -> List(InstrType.typeR, AluOpType.add, InstrFlag.nop),
+      Instruction.SLT -> List(InstrType.typeR, AluOpType.comp, InstrFlag.nop),
+      Instruction.SLTU -> List(InstrType.typeR, AluOpType.compu, InstrFlag.nop),
+      Instruction.AND -> List(InstrType.typeR, AluOpType.and, InstrFlag.nop),
+      Instruction.OR -> List(InstrType.typeR, AluOpType.or, InstrFlag.nop),
+      Instruction.XOR -> List(InstrType.typeR, AluOpType.xor, InstrFlag.nop),
+      Instruction.SLL -> List(InstrType.typeR, AluOpType.lshift, InstrFlag.nop),
+      Instruction.SRL -> List(InstrType.typeR, AluOpType.rshift, InstrFlag.nop),
+      Instruction.SUB -> List(InstrType.typeR, AluOpType.sub, InstrFlag.nop),
+      Instruction.SRA -> List(InstrType.typeR, AluOpType.rshifta, InstrFlag.nop),
+
+      Instruction.JAL -> List(InstrType.typeJ, AluOpType.nop, InstrFlag.isJump),
+      Instruction.JALR -> List(InstrType.typeI, AluOpType.nop, InstrFlag.isJump),
+
+      Instruction.BEQ -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
+      Instruction.BNE -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
+      Instruction.BLT -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
+      Instruction.BLTU -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
+      Instruction.BGE -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
+      Instruction.BGEU -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
+
       Instruction.LW -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad),
       Instruction.SW -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore),
-      Instruction.BEQ -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
-      Instruction.LUI -> List(InstrType.typeU, AluOpType.bypass2, 0.U),
-      Instruction.JAL -> List(InstrType.typeJ, AluOpType.add, InstrFlag.isJump)
+
+      Instruction.ECALL -> List(InstrType.typeI, AluOpType.nop, InstrFlag.nop),
+      Instruction.EBREAK -> List(InstrType.typeI, AluOpType.nop, InstrFlag.nop),
+
+      Instruction.CSRRW -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
+      Instruction.CSRRS -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
+      Instruction.CSRRC -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
+      Instruction.CSRRWI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
+      Instruction.CSRRSI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
+      Instruction.CSRRCI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
     )
   )
 
@@ -45,7 +86,13 @@ class Decoder extends Module {
   io.decode.aluOp := aluOpType
 
   io.decode.brType := MuxCase(BranchSel.nop, Seq(
-    (io.instr === Instruction.BEQ) -> BranchSel.beq
+    hasFlag(InstrFlag.isJump) -> BranchSel.jump,
+    (io.instr === Instruction.BEQ) -> BranchSel.beq,
+    (io.instr === Instruction.BNE) -> BranchSel.bne,
+    (io.instr === Instruction.BLT) -> BranchSel.blt,
+    (io.instr === Instruction.BLTU) -> BranchSel.bltu,
+    (io.instr === Instruction.BGE) -> BranchSel.bge,
+    (io.instr === Instruction.BGEU) -> BranchSel.bgeu,
   ))
 
   io.decode.memRen := hasFlag(InstrFlag.isLoad)
@@ -65,4 +112,13 @@ class Decoder extends Module {
   io.decode.wbSrc := Mux(io.decode.memRen, WbSrc.mem, WbSrc.alu)
 
   io.decode.isCsr := hasFlag(InstrFlag.isCsr)
+
+  io.decode.immType := MuxCase(ImmType.typeN, Seq(
+    (io.instr === Instruction.AUIPC) -> ImmType.addPc,
+    (instrType === InstrType.typeI) -> ImmType.typeI,
+    (instrType === InstrType.typeS) -> ImmType.typeS,
+    (instrType === InstrType.typeB) -> ImmType.typeB,
+    (instrType === InstrType.typeU) -> ImmType.typeU,
+    (instrType === InstrType.typeJ) -> ImmType.typeJ
+  ))
 }
