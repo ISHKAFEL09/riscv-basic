@@ -6,6 +6,13 @@ import chisel3.util._
 package object COD {
   val ctrlSize: Width = 4.W
   val xprWidth = GenConfig().xprlen.W
+  val btbWidth = GenConfig().btbSize.W
+
+  def debug(msg: String, data: Bits*) = {
+    if (GenConfig().debugOn) {
+      printf(msg, data: _*)
+    }
+  }
 
   object Const {
     val StartAddress = "h00000000".U(xprWidth)
@@ -177,11 +184,13 @@ package object COD {
   case class GenConfig() {
     val xprlen = 32
     val nxpr = 32
+    val btbSize = 1024
     val nxprbits = log2Ceil(nxpr)
     val rvc = false
     val vm = false
     val usingUser = false
     val innerIMem = true
+    val debugOn = true
     val testCase = "tests/isa/rv32ui-p-add"
   }
 }
