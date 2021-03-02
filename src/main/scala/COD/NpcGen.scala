@@ -11,7 +11,7 @@ class NpcBundle extends Bundle {
 }
 
 class NpcGen extends Module {
-  val io = new NpcBundle
+  val io = IO(new NpcBundle)
 
   val taken = RegInit(false.B)
   val npc = RegNext(io.pc + 4.U)

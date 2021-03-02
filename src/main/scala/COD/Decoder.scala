@@ -68,7 +68,7 @@ class Decoder extends Module {
       Instruction.CSRRC -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
       Instruction.CSRRWI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
       Instruction.CSRRSI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
-      Instruction.CSRRCI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
+      Instruction.CSRRCI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr)
     )
   )
 
@@ -92,7 +92,7 @@ class Decoder extends Module {
     (io.instr === Instruction.BLT) -> BranchSel.blt,
     (io.instr === Instruction.BLTU) -> BranchSel.bltu,
     (io.instr === Instruction.BGE) -> BranchSel.bge,
-    (io.instr === Instruction.BGEU) -> BranchSel.bgeu,
+    (io.instr === Instruction.BGEU) -> BranchSel.bgeu
   ))
 
   io.decode.memRen := hasFlag(InstrFlag.isLoad)

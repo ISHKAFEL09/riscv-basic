@@ -2,10 +2,12 @@ package COD
 
 import chisel3._
 import Const._
+import chisel3.internal.naming.chiselName
 
 class IFCtrlIO extends Bundle {
   val flush = Input(Bool())
   val stall = Input(Bool())
+  val fullStall = Input(Bool())
 }
 
 class IFPipeIO extends Bundle {
@@ -23,6 +25,7 @@ class IFMiscIO extends Bundle {
   val pc = Output(UInt(xprWidth))
 }
 
+@chiselName
 class StageIF(implicit conf: GenConfig) extends Module
 {
   val io = IO(new Bundle() {
@@ -36,16 +39,18 @@ class StageIF(implicit conf: GenConfig) extends Module
   val pc = RegInit(StartAddress)
   val npc = Module(new NpcGen)
   val pcMux = Mux(io.ctrl.flush, io.misc.pcBranch, npc.io.npc)
-  val pipeBundle = new IFPipeIO
+  val pipeBundle = Wire(new IFPipeIO)
   val pipeRegs = RegInit(0.U.asTypeOf(new IFPipeIO))
+  val stall = io.ctrl.stall || io.ctrl.fullStall
 
   pipeBundle.taken := npc.io.taken
   pipeBundle.npc := npc.io.npc
   pipeBundle.pc := pc
   pipeBundle.instr := io.misc.instr
+
   when (io.ctrl.flush) {
     pipeRegs.instr := BUBBLE.U
-  } .elsewhen(!io.ctrl.stall) {
+  } .elsewhen(!stall) {
     pipeRegs := pipeBundle
   }
 
@@ -53,8 +58,7 @@ class StageIF(implicit conf: GenConfig) extends Module
   npc.io.update := io.misc.update
   npc.io.pcIndex := io.misc.pcIndex
 
-
-  when (!io.ctrl.stall) {
+  when (!stall) {
     pc := pcMux
   }
 

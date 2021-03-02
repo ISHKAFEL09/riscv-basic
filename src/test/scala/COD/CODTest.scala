@@ -18,9 +18,8 @@ class CODTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   implicit val conf = GenConfig()
   it should "pass" in {
     test(new StageIF) { c =>
-      c.io.ctrlIO.flush.poke(0.B)
-      c.io.ctrlIO.stall.poke(0.B)
-      c.io.ctrlIO.pcSel.poke(PCSel.plus4)
+      c.io.ctrl.flush.poke(0.B)
+      c.io.ctrl.stall.poke(0.B)
       println(c.pc.peek().litValue())
       c.clock.step(100)
     }

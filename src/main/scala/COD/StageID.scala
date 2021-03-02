@@ -37,7 +37,7 @@ class StageID(implicit conf: GenConfig) extends Module {
   })
   io := DontCare
 
-  val valid = io.lastPipe.valid
+//  val valid = io.lastPipe.valid
 
   // registers file
   val regFile = Module(new Registers())

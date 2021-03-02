@@ -18,33 +18,41 @@ package object COD {
     val StartAddress = "h00000000".U(xprWidth)
 
     object PCSel {
-      val plus4 :: jump :: excp :: start :: Nil = Enum(4)
+      val pcSelValues = Enum(10)
+      val plus4 :: jump :: excp :: start :: extra = pcSelValues
     }
 
     object BranchSel {
-      val nop :: beq :: bne :: blt :: bltu :: bge :: bgeu :: jump :: Nil = Enum(8)
+      val branchSelValues = Enum(20)
+      val nop :: beq :: bne :: blt :: bltu :: bge :: bgeu :: jump :: extra = branchSelValues
     }
 
     object AluSrc {
-      val rf :: imm :: pc :: csr :: Nil = Enum(4)
+      val aluSrcValues = Enum(10)
+      val rf :: imm :: pc :: csr :: extra = aluSrcValues
     }
 
     object WbSrc {
-      val alu :: mem :: Nil = Enum(2)
+      val wbSrcValues = Enum(10)
+      val alu :: mem :: extra = wbSrcValues
     }
 
     object MemoryOp {
-      val mt_x :: mt_b :: mt_h :: mt_w :: mt_d :: mt_bu :: mt_hu :: mt_wu :: Nil = Enum(8)
-      val m_x :: m_xrd :: m_xwr :: Nil = Enum(3)
+      val memoryOpValues = Enum(20)
+      val mt_x :: mt_b :: mt_h :: mt_w :: mt_d :: mt_bu :: mt_hu :: mt_wu :: extra0 = memoryOpValues
+      val m_x :: m_xrd :: m_xwr :: extra1 = extra0
     }
 
     object InstrType {
-      val typeN :: typeR :: typeI :: typeS :: typeB :: typeU :: typeJ :: Nil = Enum(7)
+      val instrTypeValues = Enum(10)
+      val typeN :: typeR :: typeI :: typeS :: typeB :: typeU :: typeJ :: extra = instrTypeValues
     }
 
     object AluOpType {
-      val add :: addu :: sub :: and :: or :: xor :: bypass1 :: bypass2 ::
-        lshift :: rshift :: rshifta :: comp :: compu :: nop :: Nil = Enum(14)
+      val aluOpTypeValues = Enum(20)
+      val add :: addu :: sub :: and :: or :: xor :: extra0 = aluOpTypeValues
+      val bypass1 :: bypass2 :: lshift :: rshift :: extra1 = extra0
+      val rshifta :: comp :: compu :: nop :: extra2 = extra1
     }
 
     object InstrFlag {
@@ -57,7 +65,8 @@ package object COD {
     }
 
     object ImmType {
-      val typeN :: typeI :: typeB :: typeS :: typeU :: typeJ :: addPc :: Nil = Enum(7)
+      val immTypeValues = Enum(10)
+      val typeN :: typeI :: typeB :: typeS :: typeU :: typeJ :: addPc :: extra = immTypeValues
     }
 
     val BUBBLE = "b0000_0000_0000_0000_0100_0000_0011_0011"
