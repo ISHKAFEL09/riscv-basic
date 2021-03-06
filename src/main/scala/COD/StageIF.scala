@@ -11,6 +11,7 @@ class IFCtrlIO extends Bundle {
 }
 
 class IFPipeIO extends Bundle {
+  val valid = Bool()
   val taken = Bool()
   val pc = UInt(xprWidth)
   val npc = UInt(xprWidth)
@@ -47,6 +48,7 @@ class StageIF(implicit conf: GenConfig) extends Module
   pipeBundle.npc := npc.io.npc
   pipeBundle.pc := pc
   pipeBundle.instr := io.misc.instr
+  pipeBundle.valid := !(io.ctrl.flush || stall)
 
   when (io.ctrl.flush) {
     pipeRegs.instr := BUBBLE.U
