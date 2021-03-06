@@ -1,4 +1,4 @@
-package COD
+package cod
 
 import chisel3._
 import chisel3.util._
@@ -6,7 +6,7 @@ import Const._
 import chisel3.internal.naming.chiselName
 
 @chiselName
-class Decoder extends Module {
+case class Decoder() extends Module {
   val io = IO(new Bundle() {
     val valid = Input(Bool())
     val instr = Input(UInt(32.W))
@@ -121,4 +121,8 @@ class Decoder extends Module {
     (instrType === InstrType.typeU) -> ImmType.typeU,
     (instrType === InstrType.typeJ) -> ImmType.typeJ
   ))
+}
+
+object Decoder extends App {
+  new stage.ChiselStage().emitVerilog(Decoder(), Array("--target-dir", "generated"))
 }

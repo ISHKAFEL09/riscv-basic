@@ -1,4 +1,4 @@
-package COD
+package cod
 
 import chisel3._
 import Const._
@@ -66,7 +66,7 @@ class StageIF(implicit conf: GenConfig) extends Module
 
   io.pipe := pipeRegs
 
-  debug("pc: %x, instr: %x\n", io.pipe.pc, io.pipe.instr)
+  rtlDebug("pc: %x, instr: %x\n", io.pipe.pc, io.pipe.instr)
 }
 
 object StageIF extends App {

@@ -1,71 +1,74 @@
-package COD
+package cod
 
 import chisel3._
+import chisel3.experimental.chiselName
 import chisel3.util._
+import org.scalacheck.Prop.False
 
-class CacheReqBundle extends Bundle {
+case class CacheRequest() extends Bundle {
   val wr = Bool()
   val addr = UInt(32.W)
   val data = UInt(32.W)
 }
 
-class CacheRespBundle extends Bundle {
+case class CacheResponse() extends Bundle {
+  val wr = Bool()
   val data = UInt(32.W)
 }
 
-class MemReqBundle extends Bundle {
+case class MemRequest() extends Bundle {
   val wr = Bool()
   val addr = UInt(32.W)
   val data = UInt(128.W)
 }
 
-class MemRespBundle extends Bundle {
+case class MemResponse() extends Bundle {
   val data = UInt(128.W)
 }
 
-class TagBundle extends Bundle {
+case class TagFormat() extends Bundle {
   val valid = Bool()
   val dirty = Bool()
   val tag = UInt(18.W)
 }
 
-class AddrBundle extends Bundle {
+case class AddrFormat() extends Bundle {
   val tag = UInt(18.W)
   val line = UInt(10.W)
   val word = UInt(2.W)
   val byte = UInt(2.W)
 }
 
-class CacheWriteBundle extends Bundle {
+case class CacheWriteBundle() extends Bundle {
   val valid = Bool()
-  val sel = Bool() // 1: line, 0: word
+//  val sel = Bool() // 1: mem, 0: request
   val addr = UInt(32.W)
-  val word = UInt(32.W)
   val line = Vec(4, UInt(32.W))
+  val mask = Vec(4, Bool())
 }
 
-class Cache extends Module {
+@chiselName
+case class Cache() extends Module {
   val io = IO(new Bundle() {
-    val cacheReq = Flipped(Decoupled(new CacheReqBundle))
-    val cacheResp = Decoupled(new CacheRespBundle)
-    val memReq = Valid(new MemReqBundle)
-    val memResp = Flipped(Valid(new MemRespBundle))
-    val data = Output(Vec(4, UInt(32.W)))
+    val cacheReq = Flipped(Decoupled(new CacheRequest))
+    val cacheResp = Decoupled(new CacheResponse)
+    val memReq = Valid(new MemRequest)
+    val memResp = Flipped(Valid(new MemResponse))
+    val cacheWrite = Output(new CacheWriteBundle)
   })
 
-  val tags = SyncReadMem(1024, new TagBundle)
+  val tags = SyncReadMem(1024, TagFormat())
   val datas = SyncReadMem(1024, Vec(4, UInt(32.W)))
 
-  val reqReg = RegEnable(io.cacheReq.bits, io.cacheReq.fire()).asTypeOf(new CacheReqBundle)
+  val reqReg = RegEnable(io.cacheReq.bits, io.cacheReq.fire()).asTypeOf(new CacheRequest)
   val valid = RegInit(false.B)
   io.cacheReq.ready := valid === false.B
   when (io.cacheReq.fire()) {valid := true.B}
 
-  val addrReq = io.cacheReq.bits.addr.asTypeOf(new AddrBundle)
-  val addrReg = reqReg.addr.asTypeOf(new AddrBundle)
+  val addrReq = io.cacheReq.bits.addr.asTypeOf(new AddrFormat)
+  val addrReg = reqReg.addr.asTypeOf(new AddrFormat)
   val tag = tags.read(addrReq.line, io.cacheReq.fire())
   val data = datas.read(addrReq.line, io.cacheReq.fire())
-  io.data := data
 
   val hit = tag.valid && tag.tag === addrReg.tag
 
@@ -79,31 +82,37 @@ class Cache extends Module {
 
   val writeCacheSel = false.B
   val cacheWrite = Wire(new CacheWriteBundle)
-  when (cacheWrite.valid) {
-    val line = tags(cacheWrite.addr.asTypeOf(new AddrBundle).line)
-    line.tag := reqReg.addr.asTypeOf(new AddrBundle).tag
-    line.valid := true.B
-    line.dirty := true.B
-  }
+  io.cacheWrite := cacheWrite
 
   when (cacheWrite.valid) {
-    val addr = cacheWrite.addr.asTypeOf(new AddrBundle)
-    when (cacheWrite.sel) {
-      datas(addr.line) := cacheWrite.line
-    }
-      .otherwise(datas(addr.line)(addr.word) := cacheWrite.word)
+    val addr = cacheWrite.addr.asTypeOf(new AddrFormat)
+    datas.write(addr.line, cacheWrite.line, cacheWrite.mask)
+
+    val tagData = Wire(TagFormat())
+    tagData.tag := reqReg.addr.asTypeOf(new AddrFormat).tag
+    tagData.valid := true.B
+    tagData.dirty := true.B
+    tags.write(addr.line, tagData)
   }
   cacheWrite.line := io.memResp.bits.data.asTypeOf(Vec(4, UInt(32.W)))
-  when (reqReg.wr) {
-    cacheWrite.line(addrReg.word) := reqReg.data
-    printf("write data: %x, cachwrite line: %x\n", reqReg.data, cacheWrite.line.asUInt())
-  }
-  cacheWrite.word := reqReg.data
-  cacheWrite.addr := reqReg.addr
+  (0 to 3) foreach (i => cacheWrite.mask(i) := true.B )
 
   val compareTag :: memWriteReq :: memWriteResp :: memReadReq :: memReadResp :: finish :: Nil = Enum(6)
   val state = RegInit(compareTag)
   val jump2finish = WireInit(false.B)
+  val hitWrite = reqReg.wr && state === finish
+  when (hitWrite) {
+    cacheWrite.line(addrReg.word) := reqReg.data
+    (0 to 3 ) foreach (i => {
+      when (addrReg.word === i.U) {
+        cacheWrite.mask(i) := true.B
+      }.otherwise(
+        cacheWrite.mask(i) := false.B
+      )
+    })
+    //    printf("write data: %x, cacheWrite line: %x\n", reqReg.data, cacheWrite.line.asUInt())
+  }
+  cacheWrite.addr := reqReg.addr
   switch (state) {
     is (compareTag) {
       when (valid) {
@@ -112,10 +121,8 @@ class Cache extends Module {
           valid := false.B
           jump2finish := true.B
         }.elsewhen(tag.valid && tag.dirty) { state := memWriteReq }
-          .elsewhen(reqReg.wr === false.B) {state := memReadReq}
           .otherwise {
-            state := finish
-            jump2finish := true.B
+            state := memReadReq
           }
       }
     }
@@ -134,17 +141,17 @@ class Cache extends Module {
   }
 
   io.memReq.valid := state === memWriteReq || state === memReadReq
-  cacheWrite.valid := state === memReadResp || (reqReg.wr && jump2finish)
-  cacheWrite.sel := state === memReadResp
+  cacheWrite.valid := state === memReadResp || hitWrite
   io.cacheResp.valid := state === finish
   io.cacheResp.bits.data := RegNext(Mux(state === memReadResp,
     io.memResp.bits.data.asTypeOf(Vec(4, UInt(32.W)))(addrReg.word),
     data(addrReg.word)))
+  io.cacheResp.bits.wr := reqReg.wr
   writeMem := state === memWriteReq || state === memWriteResp
   readMem := state === memReadReq || state === memReadResp
 
   when (io.memResp.fire()) {
-    printf("get mem resp: addr: %x, data: %x\n", reqReg.addr, io.memResp.bits.data)
+//    printf("get mem resp: addr: %x, data: %x\n", reqReg.addr, io.memResp.bits.data)
   }
 }
 

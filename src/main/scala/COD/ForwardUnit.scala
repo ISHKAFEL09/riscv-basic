@@ -1,4 +1,4 @@
-package COD
+package cod
 
 import chisel3._
 import chisel3.util.{MuxCase, MuxLookup}
