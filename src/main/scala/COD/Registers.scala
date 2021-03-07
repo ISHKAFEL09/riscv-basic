@@ -1,18 +1,7 @@
 package cod
 
 import chisel3._
-
-class RegFileIo(implicit conf: GenConfig) extends Bundle {
-  val regWidth = conf.xprlen.W
-  val rs1 = Input(UInt(5.W))
-  val rs2 = Input(UInt(5.W))
-  val rd = Input(UInt(5.W))
-  val dataRs1 = Output(UInt(regWidth))
-  val dataRs2 = Output(UInt(regWidth))
-  val dataRd = Input(UInt(regWidth))
-  val wren = Input(Bool())
-  override def cloneType = { new RegFileIo().asInstanceOf[this.type] }
-}
+import Interfaces._
 
 class Registers(implicit conf: GenConfig) extends Module {
   val regWidth = conf.xprlen.W

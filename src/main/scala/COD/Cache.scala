@@ -3,41 +3,7 @@ package cod
 import chisel3._
 import chisel3.experimental.chiselName
 import chisel3.util._
-import org.scalacheck.Prop.False
-
-case class CacheRequest() extends Bundle {
-  val wr = Bool()
-  val addr = UInt(32.W)
-  val data = UInt(32.W)
-}
-
-case class CacheResponse() extends Bundle {
-  val wr = Bool()
-  val data = UInt(32.W)
-}
-
-case class MemRequest() extends Bundle {
-  val wr = Bool()
-  val addr = UInt(32.W)
-  val data = UInt(128.W)
-}
-
-case class MemResponse() extends Bundle {
-  val data = UInt(128.W)
-}
-
-case class TagFormat() extends Bundle {
-  val valid = Bool()
-  val dirty = Bool()
-  val tag = UInt(18.W)
-}
-
-case class AddrFormat() extends Bundle {
-  val tag = UInt(18.W)
-  val line = UInt(10.W)
-  val word = UInt(2.W)
-  val byte = UInt(2.W)
-}
+import Interfaces._
 
 case class CacheWriteBundle() extends Bundle {
   val valid = Bool()
@@ -50,8 +16,8 @@ case class CacheWriteBundle() extends Bundle {
 @chiselName
 case class Cache() extends Module {
   val io = IO(new Bundle() {
-    val cacheReq = Flipped(Decoupled(new CacheRequest))
-    val cacheResp = Decoupled(new CacheResponse)
+    val cacheReq = Flipped(Decoupled(new CpuRequest))
+    val cacheResp = Decoupled(new CpuResponse)
     val memReq = Valid(new MemRequest)
     val memResp = Flipped(Valid(new MemResponse))
     val cacheWrite = Output(new CacheWriteBundle)
@@ -60,7 +26,7 @@ case class Cache() extends Module {
   val tags = SyncReadMem(1024, TagFormat())
   val datas = SyncReadMem(1024, Vec(4, UInt(32.W)))
 
-  val reqReg = RegEnable(io.cacheReq.bits, io.cacheReq.fire()).asTypeOf(new CacheRequest)
+  val reqReg = RegEnable(io.cacheReq.bits, io.cacheReq.fire()).asTypeOf(new CpuRequest)
   val valid = RegInit(false.B)
   io.cacheReq.ready := valid === false.B
   when (io.cacheReq.fire()) {valid := true.B}

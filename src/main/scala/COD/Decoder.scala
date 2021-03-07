@@ -3,7 +3,8 @@ package cod
 import chisel3._
 import chisel3.util._
 import Const._
-import chisel3.internal.naming.chiselName
+import chisel3.experimental.chiselName
+import Interfaces._
 
 @chiselName
 case class Decoder() extends Module {

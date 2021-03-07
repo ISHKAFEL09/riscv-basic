@@ -1,14 +1,7 @@
 package cod
 
 import chisel3._
-
-class NpcBundle extends Bundle {
-  val pc = Input(UInt(xprWidth))
-  val pcIndex = Input(UInt(btbWidth))
-  val update = Input(Bool())
-  val taken = Output(Bool())
-  val npc = Output(UInt(xprWidth))
-}
+import Interfaces._
 
 class NpcGen extends Module {
   val io = IO(new NpcBundle)

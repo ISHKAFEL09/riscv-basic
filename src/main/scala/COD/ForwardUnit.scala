@@ -2,26 +2,7 @@ package cod
 
 import chisel3._
 import chisel3.util.{MuxCase, MuxLookup}
-
-class Forward2IDIO extends Bundle {
-  val instr = Input(UInt(32.W))
-  val rs1Data = Input(UInt(xprWidth))
-  val rs2Data = Input(UInt(xprWidth))
-  val aluOp1 = Output(UInt(xprWidth))
-  val aluOp2 = Output(UInt(xprWidth))
-}
-
-class Forward2MemWBIO extends Bundle {
-  val instr = Input(UInt(32.W))
-  val ctrl = Input(new DecodeIO)
-  val wbData = Input(UInt(xprWidth))
-}
-
-class ForwardIO extends Bundle {
-  val f2id = new Forward2IDIO
-  val f2mem = new Forward2MemWBIO
-  val f2wb = new Forward2MemWBIO
-}
+import Interfaces._
 
 class ForwardUnit extends Module {
   val io = IO(new ForwardIO)

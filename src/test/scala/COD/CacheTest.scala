@@ -4,14 +4,12 @@ import SimLib._
 import SimLib.implClass._
 import chisel3._
 import chisel3.util._
-import Const._
-import chisel3.experimental.BundleLiterals.AddBundleLiteralConstructor
-import chisel3.util.Cat
 import org.scalatest.flatspec.AnyFlatSpec
 import chiseltest._
 import chiseltest.experimental.TestOptionBuilder.ChiselScalatestOptionBuilder
 import chiseltest.internal.WriteVcdAnnotation
 import org.scalatest.matchers.should.Matchers
+import Interfaces._
 
 import scala.collection.mutable
 import scala.util.Random
@@ -23,7 +21,7 @@ case class RespPkg(wr: Boolean, data: BigInt) extends Package {
   override def toString: String = f" ${if (wr) "write" else "read"} data: ${data}%x "
 }
 
-case class CacheReqDriver(bus: DecoupledIO[CacheRequest], clk: Clock) extends Driver[ReqPkg](bus, clk) {
+case class CacheReqDriver(bus: DecoupledIO[CpuRequest], clk: Clock) extends Driver[ReqPkg](bus, clk) {
   val monitorQueue = mutable.Queue[ReqPkg]()
 
   override def send(pkg: ReqPkg): Unit = {
@@ -40,21 +38,21 @@ case class CacheReqDriver(bus: DecoupledIO[CacheRequest], clk: Clock) extends Dr
   }
 }
 
-case class CacheRespMonitor(bus: DecoupledIO[CacheResponse], clk: Clock) extends Monitor[RespPkg](bus, clk) {
+case class CacheRespMonitor(bus: ValidIO[CpuResponse], clk: Clock) extends Monitor[RespPkg](bus, clk) {
   override def sample(): RespPkg = {
     clk.waitSamplingWhere(bus.valid)
     RespPkg(bus.bits.wr.peek().litToBoolean, bus.bits.data.peek().litValue())
   }
 }
 
-case class MemReqMonitor(bus: Valid[MemRequest], clk: Clock) extends Monitor[ReqPkg](bus, clk) {
+case class MemReqMonitor(bus: ValidIO[MemRequest], clk: Clock) extends Monitor[ReqPkg](bus, clk) {
   override def sample(): ReqPkg = {
     clk.waitSamplingWhere(bus.valid)
     ReqPkg(bus.bits.wr.peek().litToBoolean, bus.bits.addr.peek().litValue(), bus.bits.data.peek().litValue())
   }
 }
 
-case class MemRespDriver(bus: Valid[MemResponse], clk: Clock) extends Driver[ReqPkg](bus, clk) {
+case class MemRespDriver(bus: ValidIO[MemResponse], clk: Clock) extends Driver[ReqPkg](bus, clk) {
   val Mem = mutable.Map[BigInt, BigInt]()
 
   override def setup(): Unit = {
@@ -121,7 +119,7 @@ case class RepeatSequence(drv: CacheReqDriver, n: Int = 100) extends Sequence[Re
   }
 }
 
-case class Env(dut: Cache, clk: Clock) extends Environment(dut) {
+case class Env(dut: Cache2, clk: Clock) extends Environment(dut) {
   def connect[T](q0: mutable.Queue[T], q1: mutable.Queue[T], clk: Clock) = {
     while (true) {
       if (q0.nonEmpty) q1.enqueue(q0.dequeue())
@@ -129,16 +127,20 @@ case class Env(dut: Cache, clk: Clock) extends Environment(dut) {
     }
   }
 
-  val cacheDriver = CacheReqDriver(dut.io.cacheReq, clk)
-  val cacheMonitor = CacheRespMonitor(dut.io.cacheResp, clk)
-  val memMonitor = MemReqMonitor(dut.io.memReq, clk)
-  val memDriver = MemRespDriver(dut.io.memResp, clk)
+//  val cacheDriver = CacheReqDriver(dut.io.cacheReq, clk)
+//  val cacheMonitor = CacheRespMonitor(dut.io.cacheResp, clk)
+//  val memMonitor = MemReqMonitor(dut.io.memReq, clk)
+//  val memDriver = MemRespDriver(dut.io.memResp, clk)
+  val cacheDriver = CacheReqDriver(dut.cpuRequest, clk)
+  val cacheMonitor = CacheRespMonitor(dut.cpuResponse, clk)
+  val memMonitor = MemReqMonitor(dut.memRequest, clk)
+  val memDriver = MemRespDriver(dut.memResponse, clk)
   val rm = Rm(cacheDriver.monitorQueue, clk, memDriver.Mem)
   val sb = CacheScoreboard(cacheMonitor.q, rm.q, clk)
 
   override def run(): Unit = {
-    val cacheMonitorThread = fork (cacheMonitor.run())
-    val memMonitorThread = fork (memMonitor.run())
+    val cacheMonitorThread = fork.withRegion(Monitor) (cacheMonitor.run())
+    val memMonitorThread = fork.withRegion(Monitor) (memMonitor.run())
     val memDriverThread = fork (memDriver.run())
     val cacheDriverThread = fork (cacheDriver.run())
     val connectThread = fork (connect(memMonitor.q, memDriver.q, clk))
@@ -166,20 +168,20 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   behavior of "CacheTest"
 
   it should "pass" in {
-    test(Cache()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+    test(Cache2()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       val packages = 1000
       var cycles = 0
       fork { while (true) { dut.clock.step(); cycles += 1 }}
 
-      dut.io.cacheResp.ready.poke(true.B)
+//      dut.io.cacheResp.ready.poke(true.B)
       val clk = dut.clock
       clk.step(10)
 
       val env = Env(dut, clk)
       val randomTb = CacheRandomTest(env, packages)
       val repeatTb = CacheRepeatTest(env, packages)
-//      tb.run()
-      repeatTb.run()
+//      repeatTb.run()
+      randomTb.run()
       println(s"${packages} package sent in ${cycles} cycles")
     }
   }

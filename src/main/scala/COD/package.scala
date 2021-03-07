@@ -1,5 +1,5 @@
 import chisel3._
-import chisel3.experimental.ChiselEnum
+import chisel3.experimental.{BaseModule, ChiselEnum}
 import chisel3.internal.firrtl.Width
 import chisel3.util._
 import chiseltest._
@@ -13,6 +13,10 @@ package object cod {
     def waitSampling(condition: Bool): Unit = {
       while (!condition.peek().litToBoolean) { clk.step(1) }
     }
+  }
+
+  def generate(dut: => RawModule) = {
+    new stage.ChiselStage().emitVerilog(dut, Array("--target-dir", "generated"))
   }
 
   def rtlDebug(msg: String, data: Bits*) = {

@@ -2,29 +2,8 @@ package cod
 
 import chisel3._
 import Const._
+import Interfaces._
 import chisel3.internal.naming.chiselName
-
-class IFCtrlIO extends Bundle {
-  val flush = Input(Bool())
-  val stall = Input(Bool())
-  val fullStall = Input(Bool())
-}
-
-class IFPipeIO extends Bundle {
-  val valid = Bool()
-  val taken = Bool()
-  val pc = UInt(xprWidth)
-  val npc = UInt(xprWidth)
-  val instr = UInt(32.W)
-}
-
-class IFMiscIO extends Bundle {
-  val pcBranch = Input(UInt(xprWidth))
-  val pcIndex = Input(UInt(btbWidth))
-  val update = Input(Bool())
-  val instr = Input(UInt(32.W))
-  val pc = Output(UInt(xprWidth))
-}
 
 @chiselName
 class StageIF(implicit conf: GenConfig) extends Module

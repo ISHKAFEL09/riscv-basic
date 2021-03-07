@@ -2,29 +2,7 @@ package cod
 
 import chisel3._
 import chisel3.experimental.chiselName
-
-class IDMiscIO extends Bundle {
-  val wbAddr = Input(UInt(xprWidth))
-  val wbData = Input(UInt(xprWidth))
-  val wbEn = Input(Bool())
-  val pcJump = Output(UInt(xprWidth))
-  val stall = Input(Bool())
-  val flush = Input(Bool())
-}
-
-class IDPipeIO extends Bundle {
-  val pc = Output(UInt(xprWidth))
-  val instr = Output(UInt(32.W))
-  val aluOp1 = Output(UInt(xprWidth))
-  val aluOp2 = Output(UInt(xprWidth))
-}
-
-class IDCtrlIO extends Bundle {
-  val instr = Output(UInt(32.W))
-  val branchEval = Output(Bool())
-  val decode = Input(new DecodeIO)
-  val forward = Flipped(new Forward2IDIO)
-}
+import Interfaces._
 
 @chiselName
 class StageID(implicit conf: GenConfig) extends Module {

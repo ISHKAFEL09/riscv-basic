@@ -108,7 +108,7 @@ abstract class ScoreBoard[T <: Package](queueDut: mutable.Queue[T], queueRm: mut
   }
 }
 
-abstract class Environment(dut: Module) {
+abstract class Environment(dut: RawModule) {
   def setup(): Unit
   def run(): Unit
   def report(): Unit

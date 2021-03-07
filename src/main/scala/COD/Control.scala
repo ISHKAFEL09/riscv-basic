@@ -1,36 +1,7 @@
 package cod
 
 import chisel3._
-
-class DecodeIO extends Bundle {
-  val pcSrc = UInt(ctrlSize)
-  val aluSrc1 = UInt(ctrlSize)
-  val aluSrc2 = UInt(ctrlSize)
-  val aluOp = UInt(ctrlSize)
-  val rfWen = Bool()
-  val memWen = Bool()
-  val memRen = Bool()
-  val wbSrc = UInt(ctrlSize)
-  val brType = UInt(ctrlSize)
-  val isCsr = Bool()
-  val immType = UInt(ctrlSize)
-}
-
-//class HazardIO extends Bundle {}
-
-class CtrlIO extends Bundle {
-  val valid = Input(Bool())
-  val instr = Input(UInt(32.W))
-  val branchEval = Input(Bool())
-
-  val decode = Output(new DecodeIO())
-  val forward = new ForwardIO
-//  val hazard = new HazardIO
-  val ifFlush = Output(Bool())
-  val ifStall = Output(Bool())
-  val idStall = Output(Bool())
-  val idFlush = Output(Bool())
-}
+import Interfaces._
 
 class Control extends Module {
   val io = IO(new CtrlIO)
