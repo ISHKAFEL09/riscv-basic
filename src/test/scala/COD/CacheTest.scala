@@ -14,6 +14,12 @@ import Interfaces._
 import scala.collection.mutable
 import scala.util.Random
 
+object SimConfig {
+  val packages = 1000
+  val maxAddress = 1024 * 18
+  val rng = new Random(1234)
+}
+
 case class ReqPkg(wr: Boolean, addr: BigInt, data: BigInt) extends Package {
   override def toString: String = f" ${if (wr) "write" else "read"} addr: ${addr}%x, data: ${data}%x "
 }
@@ -52,12 +58,12 @@ case class MemReqMonitor(bus: ValidIO[MemRequest], clk: Clock) extends Monitor[R
   }
 }
 
-case class MemRespDriver(bus: ValidIO[MemResponse], clk: Clock) extends Driver[ReqPkg](bus, clk) {
+case class MemRespDriver(bus: ValidIO[MemResponse], clk: Clock, n: Int) extends Driver[ReqPkg](bus, clk) {
   val Mem = mutable.Map[BigInt, BigInt]()
 
   override def setup(): Unit = {
-    for (i <- 0 to 1023) {
-      Mem(i) = (Random.nextInt(Int.MaxValue): BigInt) * 2 + (if (Random.nextBoolean()) 1 else 0)
+    for (i <- 0 until n) {
+      Mem(i) = (SimConfig.rng.nextInt(Int.MaxValue): BigInt) * 2 + (if (SimConfig.rng.nextBoolean()) 1 else 0)
     }
     bus.valid.poke(false.B)
   }
@@ -77,16 +83,17 @@ case class MemRespDriver(bus: ValidIO[MemResponse], clk: Clock) extends Driver[R
 
 case class Rm(qin: mutable.Queue[ReqPkg],
               clk: Clock,
-              mem: mutable.Map[BigInt, BigInt]) extends ReferenceModel[ReqPkg, RespPkg](qin, clk) {
+              mem: mutable.Map[BigInt, BigInt],
+              n: Int) extends ReferenceModel[ReqPkg, RespPkg](qin, clk) {
   val cache = mutable.Map[BigInt, BigInt]()
 
   override def setup(): Unit = {
     clk.step(1)
-    for (i <- 0 to 1023) cache(i) = mem(i)
+    for (i <- 0 until n) cache(i) = mem(i)
   }
 
   override def calculate(pkg: ReqPkg): Option[RespPkg] = {
-    simDebug(f"[RM] got new package $pkg, mem: ${mem(pkg.addr >> 2)}%x")
+    simDebug(f"[RM] got new package $pkg, mem: ${mem(pkg.addr >> 2)}%x cache: ${cache(pkg.addr >> 2)}%x")
     if (pkg.wr) { cache(pkg.addr >> 2) = pkg.data; None}
     else Some(RespPkg(wr = false, cache(pkg.addr >> 2)))
   }
@@ -101,9 +108,9 @@ case class CacheScoreboard(q0: mutable.Queue[RespPkg], q1: mutable.Queue[RespPkg
   }
 }
 
-case class RandomSequence(drv: CacheReqDriver, n: Int = 100) extends Sequence[ReqPkg](drv) {
+case class RandomSequence(drv: CacheReqDriver, n: Int, maxAddress: Int) extends Sequence[ReqPkg](drv) {
   override def run(): Unit = {
-    (0 to n).foreach(_ -> drv.q.enqueue(ReqPkg(Random.nextBoolean, Random.nextInt(1023) >> 2 << 2, Random.nextInt.abs)))
+    (0 to n).foreach(_ -> drv.q.enqueue(ReqPkg(SimConfig.rng.nextBoolean, SimConfig.rng.nextInt(maxAddress - 1) >> 2 << 2, SimConfig.rng.nextInt.abs)))
     simDebug(s"[Random Sequence] wait done begin. driver queue length: ${drv.q.length}")
     drv.waitDone()
     simDebug("[Random Sequence] all package send done!")
@@ -112,14 +119,14 @@ case class RandomSequence(drv: CacheReqDriver, n: Int = 100) extends Sequence[Re
 
 case class RepeatSequence(drv: CacheReqDriver, n: Int = 100) extends Sequence[ReqPkg](drv) {
   override def run(): Unit = {
-    (0 to n).foreach(_ -> drv.q.enqueue(ReqPkg(Random.nextBoolean, Random.nextInt(16) >> 2 << 2, Random.nextInt.abs)))
+    (0 to n).foreach(_ -> drv.q.enqueue(ReqPkg(SimConfig.rng.nextBoolean, SimConfig.rng.nextInt(16) >> 2 << 2, SimConfig.rng.nextInt.abs)))
     simDebug(s"[Random Sequence] wait done begin. driver queue length: ${drv.q.length}")
     drv.waitDone()
     simDebug("[Random Sequence] all package send done!")
   }
 }
 
-case class Env(dut: Cache2, clk: Clock) extends Environment(dut) {
+case class Env(dut: CacheBase, clk: Clock, n: Int) extends Environment(dut) {
   def connect[T](q0: mutable.Queue[T], q1: mutable.Queue[T], clk: Clock) = {
     while (true) {
       if (q0.nonEmpty) q1.enqueue(q0.dequeue())
@@ -131,11 +138,11 @@ case class Env(dut: Cache2, clk: Clock) extends Environment(dut) {
 //  val cacheMonitor = CacheRespMonitor(dut.io.cacheResp, clk)
 //  val memMonitor = MemReqMonitor(dut.io.memReq, clk)
 //  val memDriver = MemRespDriver(dut.io.memResp, clk)
-  val cacheDriver = CacheReqDriver(dut.cpuRequest, clk)
-  val cacheMonitor = CacheRespMonitor(dut.cpuResponse, clk)
-  val memMonitor = MemReqMonitor(dut.memRequest, clk)
-  val memDriver = MemRespDriver(dut.memResponse, clk)
-  val rm = Rm(cacheDriver.monitorQueue, clk, memDriver.Mem)
+  val cacheDriver = CacheReqDriver(dut.io.cpuRequest, clk)
+  val cacheMonitor = CacheRespMonitor(dut.io.cpuResponse, clk)
+  val memMonitor = MemReqMonitor(dut.io.memRequest, clk)
+  val memDriver = MemRespDriver(dut.io.memResponse, clk, n)
+  val rm = Rm(cacheDriver.monitorQueue, clk, memDriver.Mem, n)
   val sb = CacheScoreboard(cacheMonitor.q, rm.q, clk)
 
   override def run(): Unit = {
@@ -156,31 +163,40 @@ case class Env(dut: Cache2, clk: Clock) extends Environment(dut) {
   override def setup(): Unit = {}
 }
 
-case class CacheRandomTest(env: Env, n: Int = 100) extends TestBench(env) {
-  override def runSeq(): Unit = RandomSequence(env.cacheDriver, n).run()
+case class CacheRandomTest(env: Env, n: Int, a: Int) extends TestBench(env) {
+  override def runSeq(): Unit = RandomSequence(env.cacheDriver, n, a).run()
 }
 
-case class CacheRepeatTest(env: Env, n: Int = 100) extends TestBench(env) {
+case class CacheRepeatTest(env: Env, n: Int, a: Int) extends TestBench(env) {
   override def runSeq(): Unit = RepeatSequence(env.cacheDriver, n).run()
 }
 
 class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   behavior of "CacheTest"
 
-  it should "pass" in {
-    test(Cache2()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+  it should "cache3 pass" in {
+    test(Cache3()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
       val packages = 1000
       var cycles = 0
       fork { while (true) { dut.clock.step(); cycles += 1 }}
 
-//      dut.io.cacheResp.ready.poke(true.B)
+      //      dut.io.cacheResp.ready.poke(true.B)
       val clk = dut.clock
       clk.step(10)
 
-      val env = Env(dut, clk)
-      val randomTb = CacheRandomTest(env, packages)
-      val repeatTb = CacheRepeatTest(env, packages)
-//      repeatTb.run()
+      val env = Env(dut, clk, SimConfig.maxAddress)
+      val randomTb = CacheRandomTest(env, packages, SimConfig.maxAddress)
+      val repeatTb = CacheRepeatTest(env, packages, SimConfig.maxAddress)
+      //      repeatTb.run()
+//      fork.withRegion(Monitor) {
+//        while (true) {
+//          if (dut.io.memRequest.bits.addr.peek().litValue() == 0x43d0) {
+//            clk.step(10)
+//            assert(false, "got")
+//          }
+//          clk.step()
+//        }
+//      }
       randomTb.run()
       println(s"${packages} package sent in ${cycles} cycles")
     }

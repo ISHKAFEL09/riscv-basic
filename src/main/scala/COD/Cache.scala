@@ -13,6 +13,15 @@ case class CacheWriteBundle() extends Bundle {
   val mask = Vec(4, Bool())
 }
 
+abstract class CacheBase() extends Module {
+  val io = IO(new Bundle() {
+    val cpuRequest = Flipped(DecoupledIO(CpuRequest()))
+    val cpuResponse = ValidIO(CpuResponse())
+    val memRequest = ValidIO(MemRequest())
+    val memResponse = Flipped(ValidIO(MemResponse()))
+  })
+}
+
 @chiselName
 case class Cache() extends Module {
   val io = IO(new Bundle() {

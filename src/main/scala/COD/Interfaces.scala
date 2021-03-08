@@ -174,4 +174,20 @@ object Interfaces {
     val readData = UInt(128.W)
     val readTag = TagFormat()
   }
+
+  case class CacheReadRequest() extends Bundle {
+    val addr = UInt(32.W)
+  }
+
+  case class CacheReadResponse() extends Bundle {
+    val readTag = TagFormat()
+    val readData = UInt(128.W)
+  }
+
+  case class CacheWriteRequest() extends Bundle {
+    val addr = UInt(32.W)
+    val writeData = Vec(4, UInt(32.W))
+    val writeTag = TagFormat()
+    val mask = Vec(4, Bool())
+  }
 }
