@@ -3,7 +3,9 @@ package cod
 import chisel3._
 import Const._
 import Interfaces._
-import chisel3.internal.naming.chiselName
+import chisel3.experimental.{ChiselAnnotation, annotate, chiselName}
+import firrtl.annotations._
+import firrtl.AttributeAnnotation
 
 @chiselName
 class StageIF(implicit conf: GenConfig) extends Module
@@ -18,10 +20,13 @@ class StageIF(implicit conf: GenConfig) extends Module
 
   val pc = RegInit(StartAddress)
   val npc = Module(new NpcGen)
-  val pcMux = Mux(io.ctrl.flush, io.misc.pcBranch, npc.io.npc)
+  val pcMux = Mux(io.ctrl.flush, io.misc.branchCheck.pcBranch, npc.io.npc)
   val pipeBundle = Wire(new IFPipeIO)
   val pipeRegs = RegInit(0.U.asTypeOf(new IFPipeIO))
   val stall = io.ctrl.stall || io.ctrl.fullStall
+  annotate(new ChiselAnnotation {
+    override def toFirrtl: Annotation = AttributeAnnotation(stall.toTarget, "mark_debug = true")
+  })
 
   pipeBundle.taken := npc.io.taken
   pipeBundle.npc := npc.io.npc
@@ -36,8 +41,8 @@ class StageIF(implicit conf: GenConfig) extends Module
   }
 
   npc.io.pc := pcMux
-  npc.io.update := io.misc.update
-  npc.io.pcIndex := io.misc.pcIndex
+  npc.io.update := io.misc.branchCheck.update
+  npc.io.pcIndex := io.misc.branchCheck.pcIndex
 
   when (!stall) {
     pc := pcMux
