@@ -11,11 +11,9 @@ class StageID(implicit conf: GenConfig) extends Module {
     val ctrl = new IDCtrlIO
     val misc = new IDMiscIO
     val pipe = new IDPipeIO
-    val pipeCtrl = Output(new DecodeIO)
   })
-  io := DontCare
 
-//  val valid = io.lastPipe.valid
+  io.ctrl.valid := io.lastPipe.valid
 
   // registers file
   val regFile = Module(new Registers())
@@ -41,16 +39,6 @@ class StageID(implicit conf: GenConfig) extends Module {
   val decode = io.ctrl.decode
   val forward = io.ctrl.forward
 
-  // pipe regs: ctrl
-  val stall = io.misc.stall
-  val flush = io.misc.flush
-  val regPipeCtrl = RegInit(0.U.asTypeOf(new DecodeIO()))
-  when (stall | flush) {
-    regPipeCtrl := 0.U.asTypeOf(new DecodeIO())
-  } otherwise {
-    regPipeCtrl := decode
-  }
-
   // forward unit
   forward.instr := instruction
   forward.rs1Data := rs1Data
@@ -60,18 +48,18 @@ class StageID(implicit conf: GenConfig) extends Module {
 
   // pipe regs: data
   val regPipe = RegInit(0.U.asTypeOf(new IDPipeIO()))
-  when (flush) {
-    regPipe := 0.U.asTypeOf(new IDPipeIO())
-    regPipe.instr := Const.BUBBLE.U
-  } .elsewhen (!stall) {
+  val stall = io.ctrl.stall
+  when (stall) {
+    regPipe.control := 0.U.asTypeOf(new DecodeIO)
+  } .otherwise {
     regPipe.instr := instruction
     regPipe.pc := io.lastPipe.pc
     regPipe.aluOp1 := aluOp1
     regPipe.aluOp2 := aluOp2
+    regPipe.control := decode
   }
 
   // pipeline io assign
-  io.pipeCtrl := regPipeCtrl
   io.pipe := regPipe
 }
 

@@ -100,7 +100,7 @@ abstract class ScoreBoard[T <: Package](queueDut: mutable.Queue[T], queueRm: mut
   }
   def report() = {
     while (queueDut.nonEmpty && queueRm.nonEmpty) {}
-    clk.step(10)
+    clk.step(20)
     while (queueDut.nonEmpty && !isValid(queueDut.head)) queueDut.dequeue()
     while (queueRm.nonEmpty && !isValid(queueRm.head)) queueRm.dequeue()
     assert (queueDut.isEmpty, s"${queueDut.length} package left in Monitor queue, ${queueDut.dequeue()}")

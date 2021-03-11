@@ -12,29 +12,38 @@ object Interfaces {
   }
 
   class IFPipeIO extends Bundle {
-    val valid = Bool()
-    val taken = Bool()
-    val pc = UInt(xprWidth)
-    val npc = UInt(xprWidth)
-    val instr = UInt(32.W)
+    val valid = Output(Bool())
+    val taken = Output(Bool())
+    val pc = Output(UInt(xprWidth))
+    val npc = Output(UInt(xprWidth))
+    val instr = Output(UInt(32.W))
   }
 
   class IFMiscIO extends Bundle {
-    val pcBranch = Input(UInt(xprWidth))
-    val pcIndex = Input(UInt(btbWidth))
-    val update = Input(Bool())
+    val branchCheck = Input(BranchCheckIO())
     val instr = Input(UInt(32.W))
     val pc = Output(UInt(xprWidth))
   }
 
   /* instruction decode stage interface */
+  case class BranchCheckIO() extends Bundle {
+    val update = Output(Bool())
+    val taken = Output(Bool())
+    val pcIndex = Output(UInt(btbWidth))
+    val pcBranch = Output(UInt(xprWidth))
+  }
+
+  case class CsrIO() extends Bundle {
+    val request = ValidIO(UInt(32.W))
+    val response = Input(UInt(32.W))
+  }
+
   class IDMiscIO extends Bundle {
     val wbAddr = Input(UInt(xprWidth))
     val wbData = Input(UInt(xprWidth))
     val wbEn = Input(Bool())
-    val pcJump = Output(UInt(xprWidth))
-    val stall = Input(Bool())
-    val flush = Input(Bool())
+    val branchCheck = BranchCheckIO()
+    val csr = CsrIO()
   }
 
   class IDPipeIO extends Bundle {
@@ -42,13 +51,17 @@ object Interfaces {
     val instr = Output(UInt(32.W))
     val aluOp1 = Output(UInt(xprWidth))
     val aluOp2 = Output(UInt(xprWidth))
+    val control = Output(new DecodeIO)
   }
 
   class IDCtrlIO extends Bundle {
     val instr = Output(UInt(32.W))
-    val branchEval = Output(Bool())
+    val valid = Output(Bool())
+    val branchErr = Output(Bool())
     val decode = Input(new DecodeIO)
     val forward = Flipped(new Forward2IDIO)
+    val stall = Input(Bool())
+    val fullStall = Input(Bool())
   }
 
   /* register file interface */

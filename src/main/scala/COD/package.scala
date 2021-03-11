@@ -7,7 +7,7 @@ import chiseltest._
 package object cod {
   val ctrlSize: Width = 4.W
   val xprWidth = GenConfig().xprlen.W
-  val btbWidth = GenConfig().btbSize.W
+  val btbWidth = log2Up(GenConfig().btbSize).W
 
   implicit class ClockRelated(clk: Clock) {
     def waitSampling(condition: Bool): Unit = {

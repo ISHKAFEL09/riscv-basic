@@ -15,9 +15,9 @@ import scala.collection.mutable
 import scala.util.Random
 
 object SimConfig {
-  val packages = 1000
-  val maxAddress = 1024 * 18
-  val rng = new Random(1234)
+  val packages = 10000
+  val maxAddress = 1024 * 1024
+  val rng = new Random()
 }
 
 case class ReqPkg(wr: Boolean, addr: BigInt, data: BigInt) extends Package {
@@ -69,10 +69,12 @@ case class MemRespDriver(bus: ValidIO[MemResponse], clk: Clock, n: Int) extends 
   }
 
   override def send(pkg: ReqPkg): Unit = {
+    val addr = pkg.addr >> 4 << 2
+    val b32Mask = BigInt("FFFFFFFF", 16)
     if (pkg.wr) {
-      Mem(pkg.addr >> 2) = pkg.data
+      (0 to 3) foreach (i => Mem(addr + i) = (pkg.data >> (32 * i)) & b32Mask)
+      simDebug(f"[MemRespDriver] got $pkg, write ${addr}%x ${Mem(addr)}%x")
     } else {
-      val addr = pkg.addr >> 4 << 2
       bus.bits.data.poke(((Mem(addr + 3) << 96) + (Mem(addr + 2) << 64) + (Mem(addr + 1) << 32) + Mem(addr)).U)
     }
     bus.valid.poke(true.B)
@@ -176,7 +178,7 @@ class CacheTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
 
   it should "cache3 pass" in {
     test(Cache3()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
-      val packages = 1000
+      val packages = SimConfig.packages
       var cycles = 0
       fork { while (true) { dut.clock.step(); cycles += 1 }}
 
