@@ -15,7 +15,7 @@ import scala.collection.mutable
 import scala.util.Random
 
 object SimConfig {
-  val packages = 10000
+  val packages = 1000
   val maxAddress = 1024 * 1024
   val rng = new Random()
 }
