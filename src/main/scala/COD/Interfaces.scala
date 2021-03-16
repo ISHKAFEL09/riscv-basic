@@ -3,26 +3,35 @@ package cod
 import chisel3._
 import chisel3.util._
 
+trait ControlIO extends Bundle {
+  val stall = Input(Bool())
+  val fullStall = Input(Bool())
+  val flush = Input(Bool())
+  val valid = Output(Bool())
+  val instr = Output(UInt(32.W))
+}
+
+trait PipeLineIO extends Bundle {
+  val valid = Output(Bool())
+  val pc = Output(UInt(xprWidth))
+  val instr = Output(UInt(32.W))
+}
+
 object Interfaces {
   /* instruction fetch stage interface*/
-  class IFCtrlIO extends Bundle {
-    val flush = Input(Bool())
-    val stall = Input(Bool())
-    val fullStall = Input(Bool())
+  class IfCtrlIO extends ControlIO {
+    val pcSel = Input(UInt(ctrlSize))
   }
 
-  class IFPipeIO extends Bundle {
-    val valid = Output(Bool())
+  case class IfPipeIO() extends PipeLineIO {
     val taken = Output(Bool())
-    val pc = Output(UInt(xprWidth))
     val npc = Output(UInt(xprWidth))
-    val instr = Output(UInt(32.W))
   }
 
-  class IFMiscIO extends Bundle {
-    val branchCheck = Input(BranchCheckIO())
+  class IfMiscIO extends Bundle {
+    val branchCheck = Flipped(BranchCheckIO())
     val instr = Input(UInt(32.W))
-    val pc = Output(UInt(xprWidth))
+    val pc = ValidIO(UInt(xprWidth))
   }
 
   /* instruction decode stage interface */
@@ -38,7 +47,7 @@ object Interfaces {
     val response = Input(UInt(32.W))
   }
 
-  class IDMiscIO extends Bundle {
+  class IdMiscIO extends Bundle {
     val wbAddr = Input(UInt(xprWidth))
     val wbData = Input(UInt(xprWidth))
     val wbEn = Input(Bool())
@@ -46,22 +55,19 @@ object Interfaces {
     val csr = CsrIO()
   }
 
-  class IDPipeIO extends Bundle {
-    val pc = Output(UInt(xprWidth))
-    val instr = Output(UInt(32.W))
+  case class IdPipeIO() extends PipeLineIO {
     val aluOp1 = Output(UInt(xprWidth))
     val aluOp2 = Output(UInt(xprWidth))
-    val control = Output(new DecodeIO)
+    val decode = Output(new DecodeIO)
   }
 
-  class IDCtrlIO extends Bundle {
-    val instr = Output(UInt(32.W))
-    val valid = Output(Bool())
+  class IdCtrlIO extends ControlIO {
     val branchErr = Output(Bool())
     val decode = Input(new DecodeIO)
-    val forward = Flipped(new Forward2IDIO)
-    val stall = Input(Bool())
-    val fullStall = Input(Bool())
+    val rs1Data = Output(UInt(xprWidth))
+    val rs2Data = Output(UInt(xprWidth))
+    val fwdRs1 = Input(UInt(xprWidth))
+    val fwdRs2 = Input(UInt(xprWidth))
   }
 
   /* register file interface */
@@ -91,8 +97,8 @@ object Interfaces {
     val instr = Input(UInt(32.W))
     val rs1Data = Input(UInt(xprWidth))
     val rs2Data = Input(UInt(xprWidth))
-    val aluOp1 = Output(UInt(xprWidth))
-    val aluOp2 = Output(UInt(xprWidth))
+    val fwdRs1 = Output(UInt(xprWidth))
+    val fwdRs2 = Output(UInt(xprWidth))
   }
 
   class Forward2MemWBIO extends Bundle {
@@ -123,17 +129,11 @@ object Interfaces {
   }
 
   class CtrlIO extends Bundle {
-    val valid = Input(Bool())
-    val instr = Input(UInt(32.W))
-    val branchEval = Input(Bool())
-
-    val decode = Output(new DecodeIO())
-    val forward = new ForwardIO
-    //  val hazard = new HazardIO
-    val ifFlush = Output(Bool())
-    val ifStall = Output(Bool())
-    val idStall = Output(Bool())
-    val idFlush = Output(Bool())
+    val ifStage = Flipped(new IfCtrlIO())
+    val idStage = Flipped(new IdCtrlIO())
+    val exStage = Flipped(ExCtrlIO())
+    val memStage = Flipped(MemCtrlIO())
+    val wbStage = Flipped(WbCtrlIO())
   }
 
   /* cache interface */
@@ -202,5 +202,22 @@ object Interfaces {
     val writeData = Vec(4, UInt(32.W))
     val writeTag = TagFormat()
     val mask = Vec(4, Bool())
+  }
+  
+  // exe stage interface
+  case class ExCtrlIO() extends ControlIO {
+    val rfWen = Output(Bool())
+  }
+
+  // mem stage interface
+  case class MemCtrlIO() extends ControlIO {
+    val ctrl = Output(new DecodeIO)
+    val wbData = Output(UInt(xprWidth))
+  }
+
+  // wb stage interface
+  case class WbCtrlIO() extends ControlIO {
+    val ctrl = Output(new DecodeIO)
+    val wbData = Output(UInt(xprWidth))
   }
 }

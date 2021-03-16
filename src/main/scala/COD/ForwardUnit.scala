@@ -1,7 +1,7 @@
 package cod
 
 import chisel3._
-import chisel3.util.{MuxCase, MuxLookup}
+import chisel3.util._
 import Interfaces._
 
 class ForwardUnit extends Module {
@@ -20,12 +20,12 @@ class ForwardUnit extends Module {
   val hazardRs1WB = (rs1 === rdWB) && wrEnWB
   val hazardRs2WB = (rs2 === rdWB) && wrEnWB
 
-  io.f2id.aluOp1 := MuxCase(io.f2id.rs1Data, Seq(
+  io.f2id.fwdRs1 := MuxCase(io.f2id.rs1Data, Seq(
     hazardRs1Mem -> io.f2mem.wbData,
     hazardRs1WB -> io.f2wb.wbData
   ))
 
-  io.f2id.aluOp2 := MuxCase(io.f2id.rs2Data, Seq(
+  io.f2id.fwdRs2 := MuxCase(io.f2id.rs2Data, Seq(
     hazardRs2Mem -> io.f2mem.wbData,
     hazardRs2WB -> io.f2wb.wbData
   ))

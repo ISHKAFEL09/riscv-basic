@@ -4,6 +4,7 @@ import chisel3._
 import Const._
 import Interfaces._
 import chisel3.experimental.{ChiselAnnotation, annotate, chiselName}
+import chisel3.util.MuxLookup
 import firrtl.annotations._
 import firrtl.AttributeAnnotation
 
@@ -11,18 +12,19 @@ import firrtl.AttributeAnnotation
 class StageIF(implicit conf: GenConfig) extends Module
 {
   val io = IO(new Bundle() {
-    val ctrl = new IFCtrlIO()
-    val pipe = Output(new IFPipeIO())
-    val misc = new IFMiscIO()
+    val ctrl = new IfCtrlIO()
+    val pipe = Output(new IfPipeIO())
+    val misc = new IfMiscIO()
   })
-
-  io := DontCare
 
   val pc = RegInit(StartAddress)
   val npc = Module(new NpcGen)
-  val pcMux = Mux(io.ctrl.flush, io.misc.branchCheck.pcBranch, npc.io.npc)
-  val pipeBundle = Wire(new IFPipeIO)
-  val pipeRegs = RegInit(0.U.asTypeOf(new IFPipeIO))
+  val pcMux = MuxLookup(io.ctrl.pcSel, npc.io.npc, Seq(
+    PCSel.branch -> io.misc.branchCheck.pcBranch,
+    PCSel.exception -> 0.U
+  ))
+  val pipeBundle = Wire(new IfPipeIO)
+  val pipeRegs = RegInit(0.U.asTypeOf(new IfPipeIO))
   val stall = io.ctrl.stall || io.ctrl.fullStall
   annotate(new ChiselAnnotation {
     override def toFirrtl: Annotation = AttributeAnnotation(stall.toTarget, "mark_debug = true")
@@ -49,6 +51,11 @@ class StageIF(implicit conf: GenConfig) extends Module
   }
 
   io.pipe := pipeRegs
+  io.misc.pc.bits := pc
+  io.misc.pc.valid := RegNext(!(io.ctrl.stall || io.ctrl.fullStall || io.ctrl.flush))
+
+  io.ctrl.instr := DontCare
+  io.ctrl.valid := DontCare
 
   rtlDebug("pc: %x, instr: %x\n", io.pipe.pc, io.pipe.instr)
 }

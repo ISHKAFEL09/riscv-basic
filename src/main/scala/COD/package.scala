@@ -34,7 +34,7 @@ package object cod {
 
     object PCSel {
       val pcSelValues = Enum(10)
-      val plus4 :: jump :: excp :: start :: extra = pcSelValues
+      val npc :: branch :: exception :: extra = pcSelValues
     }
 
     object BranchSel {

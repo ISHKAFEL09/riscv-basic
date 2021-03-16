@@ -11,7 +11,6 @@ case class Decoder() extends Module {
   val io = IO(new Bundle() {
     val valid = Input(Bool())
     val instr = Input(UInt(32.W))
-    val branchEval = Input(Bool())
     val decode = Output(new DecodeIO)
   })
 
@@ -80,9 +79,9 @@ case class Decoder() extends Module {
     (instrFlag & flag).orR()
   }
 
-  io.decode.pcSrc := MuxCase(PCSel.plus4, Seq(
-    (io.branchEval && hasFlag(InstrFlag.isBranch)) -> PCSel.jump
-  ))
+//  io.decode.pcSrc := MuxCase(PCSel.plus4, Seq(
+//    (io.branchEval && hasFlag(InstrFlag.isBranch)) -> PCSel.jump
+//  ))
 
   io.decode.aluOp := aluOpType
 
