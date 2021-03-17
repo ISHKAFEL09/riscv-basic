@@ -5,19 +5,34 @@ import chisel3.util._
 
 trait ControlIO extends Bundle {
   val stall = Input(Bool())
-  val fullStall = Input(Bool())
+//  val fullStall = Input(Bool())
   val flush = Input(Bool())
-  val valid = Output(Bool())
+//  val valid = Output(Bool())
   val instr = Output(UInt(32.W))
 }
 
 trait PipeLineIO extends Bundle {
-  val valid = Output(Bool())
+//  val valid = Output(Bool())
   val pc = Output(UInt(xprWidth))
   val instr = Output(UInt(32.W))
 }
 
 object Interfaces {
+  case class MemReq() extends Bundle {
+    val wr = Bool()
+    val addr = UInt(xprWidth)
+    val wdata = UInt(xprWidth)
+  }
+
+  case class MemResp() extends Bundle {
+    val rdata = UInt(xprWidth)
+  }
+
+  case class MemoryIO() extends Bundle {
+    val req = Flipped(ValidIO(MemReq()))
+    val resp = ValidIO(MemResp())
+  }
+
   /* instruction fetch stage interface*/
   class IfCtrlIO extends ControlIO {
     val pcSel = Input(UInt(ctrlSize))
@@ -29,35 +44,50 @@ object Interfaces {
   }
 
   class IfMiscIO extends Bundle {
-    val branchCheck = Flipped(BranchCheckIO())
-    val instr = Input(UInt(32.W))
-    val pc = ValidIO(UInt(xprWidth))
+    val branchCheck = Flipped(IfBranchUpdate())
+    val imem = Flipped(MemoryIO())
   }
 
   /* instruction decode stage interface */
-  case class BranchCheckIO() extends Bundle {
+  case class IfBranchUpdate() extends Bundle {
     val update = Output(Bool())
     val taken = Output(Bool())
     val pcIndex = Output(UInt(btbWidth))
     val pcBranch = Output(UInt(xprWidth))
   }
 
+  case class CsrReq() extends Bundle {
+    val cmd = UInt(3.W)
+    val csr = UInt(12.W)
+    val rs = UInt(xprWidth)
+    val imm = UInt(5.W)
+  }
+
+  case class CsrResp() extends Bundle {
+    val rd = UInt(xprWidth)
+  }
+
   case class CsrIO() extends Bundle {
-    val request = ValidIO(UInt(32.W))
-    val response = Input(UInt(32.W))
+    val req = Flipped(ValidIO(CsrReq()))
+    val resp = Output(CsrResp())
+  }
+
+  case class IdRfWriteIO() extends Bundle {
+    val enable = Input(Bool())
+    val addr = Input(UInt(xprWidth))
+    val data = Input(UInt(xprWidth))
   }
 
   class IdMiscIO extends Bundle {
-    val wbAddr = Input(UInt(xprWidth))
-    val wbData = Input(UInt(xprWidth))
-    val wbEn = Input(Bool())
-    val branchCheck = BranchCheckIO()
-    val csr = CsrIO()
+    val rf = IdRfWriteIO()
+    val branchCheck = IfBranchUpdate()
+    val csr = Flipped(CsrIO())
   }
 
   case class IdPipeIO() extends PipeLineIO {
     val aluOp1 = Output(UInt(xprWidth))
     val aluOp2 = Output(UInt(xprWidth))
+    val memWdata = Output(UInt(xprWidth))
     val decode = Output(new DecodeIO)
   }
 

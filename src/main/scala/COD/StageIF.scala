@@ -13,7 +13,7 @@ class StageIF(implicit conf: GenConfig) extends Module
 {
   val io = IO(new Bundle() {
     val ctrl = new IfCtrlIO()
-    val pipe = Output(new IfPipeIO())
+    val pipe = Output(IfPipeIO())
     val misc = new IfMiscIO()
   })
 
@@ -25,37 +25,35 @@ class StageIF(implicit conf: GenConfig) extends Module
   ))
   val pipeBundle = Wire(new IfPipeIO)
   val pipeRegs = RegInit(0.U.asTypeOf(new IfPipeIO))
-  val stall = io.ctrl.stall || io.ctrl.fullStall
-  annotate(new ChiselAnnotation {
-    override def toFirrtl: Annotation = AttributeAnnotation(stall.toTarget, "mark_debug = true")
-  })
+//  annotate(new ChiselAnnotation {
+//    override def toFirrtl: Annotation = AttributeAnnotation(io.ctrl.stall.toTarget, "mark_debug = true")
+//  })
 
   pipeBundle.taken := npc.io.taken
   pipeBundle.npc := npc.io.npc
   pipeBundle.pc := pc
-  pipeBundle.instr := io.misc.instr
-  pipeBundle.valid := !(io.ctrl.flush || stall)
+  pipeBundle.instr := io.misc.imem.resp.bits.rdata
 
-  when (io.ctrl.flush) {
-    pipeRegs.instr := BUBBLE.U
-  } .elsewhen(!stall) {
-    pipeRegs := pipeBundle
+  when (!io.ctrl.stall) {
+    when (io.ctrl.flush) {
+      pipeRegs.instr := BUBBLE.U
+    } otherwise {
+      pipeRegs := pipeBundle
+    }
+    pc := pcMux
   }
 
   npc.io.pc := pcMux
   npc.io.update := io.misc.branchCheck.update
   npc.io.pcIndex := io.misc.branchCheck.pcIndex
 
-  when (!stall) {
-    pc := pcMux
-  }
-
   io.pipe := pipeRegs
-  io.misc.pc.bits := pc
-  io.misc.pc.valid := RegNext(!(io.ctrl.stall || io.ctrl.fullStall || io.ctrl.flush))
 
+  io.misc.imem.req.valid := RegNext(!(io.ctrl.stall || io.ctrl.flush))
+  io.misc.imem.req.bits.wr := false.B
+  io.misc.imem.req.bits.addr := pc
+  io.misc.imem.req.bits.wdata := DontCare
   io.ctrl.instr := DontCare
-  io.ctrl.valid := DontCare
 
   rtlDebug("pc: %x, instr: %x\n", io.pipe.pc, io.pipe.instr)
 }

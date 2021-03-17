@@ -28,7 +28,6 @@ class Control extends Module {
   f2wb.instr <> io.wbStage.instr
   f2wb.wbData <> io.wbStage.wbData
 
-  decoder.io.valid <> io.idStage.valid
   decoder.io.instr <> io.idStage.instr
   decoder.io.decode <> io.idStage.decode
 
