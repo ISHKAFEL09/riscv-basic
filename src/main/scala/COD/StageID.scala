@@ -1,6 +1,7 @@
 package cod
 
 import chisel3._
+import chisel3.util._
 import chisel3.experimental.chiselName
 import Interfaces._
 import chisel3.util.MuxLookup
@@ -29,8 +30,14 @@ class StageID(implicit conf: GenConfig) extends Module {
   regFile.io.rd := io.misc.rf.addr
   regFile.io.dataRd := io.misc.rf.data
 
-  val immData = Wire(UInt(xprWidth))
-  immData := 0.U
+  // immediate
+  val immData = MuxLookup(io.ctrl.decode.immType, 0.U, Seq(
+    ImmType.typeI -> Cat(Fill(21, instruction(31)), instruction(30, 20)),
+    ImmType.typeS -> Cat(Fill(21, instruction(31)), instruction(30, 25), instruction(11, 7)),
+    ImmType.typeB -> Cat(Fill(20, instruction(31)), instruction(7), instruction(30, 25), instruction(11, 8), false.B),
+    ImmType.typeU -> Cat(instruction(31, 12), 0.U(12.W)),
+    ImmType.typeJ -> Cat(Fill(12, instruction(31)), instruction(19, 12), instruction(20), instruction(30, 21), false.B)
+  ))
 
   // ALU OP
   io.ctrl.rs1Data := rs1Data
@@ -42,9 +49,30 @@ class StageID(implicit conf: GenConfig) extends Module {
   val aluOp2 = MuxLookup(io.ctrl.decode.aluSrc2, io.ctrl.fwdRs2, Seq(
     AluSrc.rf -> io.ctrl.fwdRs2,
     AluSrc.imm -> immData,
-    AluSrc.pc -> io.lastPipe.pc,
+    AluSrc.pc -> (io.lastPipe.pc + 4.U),
     AluSrc.csr -> io.misc.csr.resp.rd
   ))
+
+  // branch check
+  val taken = MuxLookup(io.ctrl.decode.brType, false.B, Seq(
+    BranchSel.jump -> true.B,
+    BranchSel.beq -> (aluOp1 === aluOp2),
+    BranchSel.bne -> (aluOp1 =/= aluOp2),
+    BranchSel.bge -> (aluOp1.asSInt() >= aluOp2.asSInt()),
+    BranchSel.bgeu -> (aluOp1 >= aluOp2),
+    BranchSel.blt -> (aluOp1.asSInt() < aluOp2.asSInt()),
+    BranchSel.bltu -> (aluOp1 < aluOp2)
+  ))
+  val branchPc = MuxLookup(io.ctrl.decode.brTarget, io.lastPipe.pc + 4.U, Seq(
+    BranchTarget.jal -> (io.lastPipe.pc + immData),
+    BranchTarget.branch -> (io.lastPipe.pc + immData),
+    BranchTarget.jalr -> Cat((aluOp1 + immData)(conf.xprlen - 1, 1), false.B)
+  ))
+  io.ctrl.branchErr := taken =/= io.lastPipe.taken
+  io.misc.branchCheck.update := io.ctrl.branchErr
+  io.misc.branchCheck.taken := taken
+  io.misc.branchCheck.pcIndex := io.lastPipe.pc(btbWidth.get - 1, 0)
+  io.misc.branchCheck.pcBranch := branchPc
 
   // pipe regs
   val regPipe = RegInit(0.U.asTypeOf(IdPipeIO()))

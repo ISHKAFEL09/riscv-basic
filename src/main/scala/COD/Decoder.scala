@@ -83,6 +83,12 @@ case class Decoder() extends Module {
 //    (io.branchEval && hasFlag(InstrFlag.isBranch)) -> PCSel.jump
 //  ))
 
+  io.decode.brTarget := MuxCase(BranchTarget.nop, Seq(
+    (io.instr === Instruction.JAL) -> BranchTarget.jal,
+    (io.instr === Instruction.JALR) -> BranchTarget.jalr,
+    hasFlag(InstrFlag.isBranch) -> BranchTarget.branch
+  ))
+
   io.decode.aluOp := aluOpType
 
   io.decode.brType := MuxCase(BranchSel.nop, Seq(

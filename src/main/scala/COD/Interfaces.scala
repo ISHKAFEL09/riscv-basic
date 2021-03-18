@@ -156,6 +156,7 @@ object Interfaces {
     val brType = UInt(ctrlSize)
     val isCsr = Bool()
     val immType = UInt(ctrlSize)
+    val brTarget = UInt(ctrlSize)
   }
 
   class CtrlIO extends Bundle {
