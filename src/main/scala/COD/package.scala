@@ -42,6 +42,10 @@ package object cod {
       val nop :: beq :: bne :: blt :: bltu :: bge :: bgeu :: jump :: extra = branchSelValues
     }
 
+    object BranchTarget {
+      val nop :: jal :: jalr :: branch :: extra = Enum(10)
+    }
+
     object AluSrc {
       val aluSrcValues = Enum(10)
       val rf :: imm :: pc :: csr :: extra = aluSrcValues
@@ -82,6 +86,10 @@ package object cod {
     object ImmType {
       val immTypeValues = Enum(10)
       val typeN :: typeI :: typeB :: typeS :: typeU :: typeJ :: addPc :: extra = immTypeValues
+    }
+
+    object CsrCmd {
+      val csrRw :: csrRs :: csrRc :: csrRwI :: csrRsI :: csrRcI :: extra = Enum(10)
     }
 
     val BUBBLE = "b0000_0000_0000_0000_0100_0000_0011_0011"
