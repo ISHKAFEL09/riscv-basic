@@ -16,6 +16,8 @@ class StageID(implicit conf: GenConfig) extends Module {
     val misc = new IdMiscIO
   })
 
+  io.ctrl.exception := false.B
+
   // registers file
   val regFile = Module(new Registers())
   val instruction = io.lastPipe.instr
@@ -90,6 +92,14 @@ class StageID(implicit conf: GenConfig) extends Module {
   } otherwise {
     regPipe.decode := 0.U.asTypeOf(new DecodeIO)
   }
+
+  // csr
+  val csr = io.misc.csr
+  csr.req.valid := io.ctrl.decode.isCsr
+  csr.req.bits.csr := instruction(31, 20)
+  csr.req.bits.imm := instruction(19, 15)
+  csr.req.bits.rs := aluOp1
+  csr.req.bits.cmd := instruction(14, 12)
 
   io.ctrl.instr := io.lastPipe.instr
   // pipeline io assign

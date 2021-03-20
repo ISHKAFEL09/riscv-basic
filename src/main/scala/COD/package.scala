@@ -1,5 +1,4 @@
 import chisel3._
-import chisel3.experimental.{BaseModule, ChiselEnum}
 import chisel3.internal.firrtl.Width
 import chisel3.util._
 import chiseltest._
@@ -33,45 +32,37 @@ package object cod {
     val StartAddress = "h00000000".U(xprWidth)
 
     object PCSel {
-      val pcSelValues = Enum(10)
-      val npc :: branch :: exception :: extra = pcSelValues
+      val npc :: branch :: exception :: _ = Enum(10)
     }
 
     object BranchSel {
-      val branchSelValues = Enum(20)
-      val nop :: beq :: bne :: blt :: bltu :: bge :: bgeu :: jump :: extra = branchSelValues
+      val nop :: beq :: bne :: blt :: bltu :: bge :: bgeu :: jump :: _ = Enum(10)
     }
 
     object BranchTarget {
-      val nop :: jal :: jalr :: branch :: extra = Enum(10)
+      val nop :: jal :: jalr :: branch :: _ = Enum(10)
     }
 
     object AluSrc {
-      val aluSrcValues = Enum(10)
-      val rf :: imm :: pc :: csr :: extra = aluSrcValues
+      val rf :: imm :: pc :: csr :: _ = Enum(10)
     }
 
     object WbSrc {
-      val wbSrcValues = Enum(10)
-      val alu :: mem :: extra = wbSrcValues
+      val alu :: mem :: _ = Enum(10)
     }
 
     object MemoryOp {
-      val memoryOpValues = Enum(20)
-      val mt_x :: mt_b :: mt_h :: mt_w :: mt_d :: mt_bu :: mt_hu :: mt_wu :: extra0 = memoryOpValues
-      val m_x :: m_xrd :: m_xwr :: extra1 = extra0
+      val (mt_x :: mt_b :: mt_h :: mt_w :: mt_d :: mt_bu :: mt_hu :: mt_wu ::
+        m_x :: m_xrd :: m_xwr :: _) = Enum(20)
     }
 
     object InstrType {
-      val instrTypeValues = Enum(10)
-      val typeN :: typeR :: typeI :: typeS :: typeB :: typeU :: typeJ :: extra = instrTypeValues
+      val typeN :: typeR :: typeI :: typeS :: typeB :: typeU :: typeJ :: _ = Enum(10)
     }
 
     object AluOpType {
-      val aluOpTypeValues = Enum(20)
-      val add :: addu :: sub :: and :: or :: xor :: extra0 = aluOpTypeValues
-      val bypass1 :: bypass2 :: lshift :: rshift :: extra1 = extra0
-      val rshifta :: comp :: compu :: nop :: extra2 = extra1
+      val (add :: addu :: sub :: and :: or :: xor :: bypass1 :: bypass2 ::
+        lshift :: rshift :: rshifta :: comp :: compu :: nop :: _) = Enum(20)
     }
 
     object InstrFlag {
@@ -84,12 +75,11 @@ package object cod {
     }
 
     object ImmType {
-      val immTypeValues = Enum(10)
-      val typeN :: typeI :: typeB :: typeS :: typeU :: typeJ :: addPc :: extra = immTypeValues
+      val typeN :: typeI :: typeB :: typeS :: typeU :: typeJ :: addPc :: _ = Enum(10)
     }
 
     object CsrCmd {
-      val csrRw :: csrRs :: csrRc :: csrRwI :: csrRsI :: csrRcI :: extra = Enum(10)
+      val csrRw :: csrRs :: csrRc :: csrRwI :: csrRsI :: csrRcI :: _ = Enum(10)
     }
 
     val BUBBLE = "b0000_0000_0000_0000_0100_0000_0011_0011"

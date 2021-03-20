@@ -12,10 +12,12 @@ import firrtl.AttributeAnnotation
 class StageIF(implicit conf: GenConfig) extends Module
 {
   val io = IO(new Bundle() {
-    val ctrl = new IfCtrlIO()
-    val pipe = Output(IfPipeIO())
-    val misc = new IfMiscIO()
+    val ctrl = IfCtrlIO()
+    val pipe = IfPipeIO()
+    val misc = IfMiscIO()
   })
+
+  io.ctrl.exception := false.B
 
   val pc = RegInit(StartAddress)
   val npc = Module(new NpcGen)
