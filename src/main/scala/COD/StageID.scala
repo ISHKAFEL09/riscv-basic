@@ -17,6 +17,7 @@ case class StageID() extends Module {
   })
 
   io.ctrl.exception := false.B
+  io.ctrl.valid := io.lastPipe.valid
 
   // registers file
   val regFile = Module(new Registers())

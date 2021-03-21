@@ -73,7 +73,9 @@ case class Decoder() extends Module {
   )
 
   val instrType :: aluOpType :: instrFlag :: Nil = decLevel0
-  when (io.valid) { assert(instrType =/= InstrType.typeN, "Unknown instr") }
+//  rtlDebug("[Decoder] valid: %x, instr: %x, type: %x, aluOpType: %x, instrFlag: %x\n",
+//    io.valid, io.instr, instrType, aluOpType, instrFlag)
+  when (io.valid) { assert(instrType =/= InstrType.typeN, "Unknown instr %x", io.instr) }
 
   def hasFlag(flag: UInt): Bool = {
     (instrFlag & flag).orR()

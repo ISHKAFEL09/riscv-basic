@@ -61,13 +61,14 @@ case class Control() extends Module {
 
   decoder.io.instr <> io.idStage.instr
   decoder.io.decode <> io.idStage.decode
-  decoder.io.valid := true.B
+  decoder.io.valid := io.idStage.valid
 
   def stall4Mem(reqFire: Bool, respFire: Bool): Bool = {
     val validReg = RegInit(false.B)
     when(reqFire) {
       validReg := true.B
-    }.elsewhen(respFire) {
+    }
+    when(respFire) {
       validReg := false.B
     }
     validReg && !respFire

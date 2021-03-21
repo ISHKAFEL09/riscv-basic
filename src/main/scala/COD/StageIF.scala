@@ -20,7 +20,7 @@ case class StageIF() extends Module
   io.ctrl.exception := false.B
 
   val pc = RegInit(StartAddress)
-  val npc = Module(new NpcGen)
+  val npc = Module(new NpcGen(StartAddress))
   val pcMux = MuxLookup(io.ctrl.pcSel, npc.io.npc, Seq(
     PCSel.branch -> io.misc.branchCheck.pcBranch,
     PCSel.exception -> 0.U
@@ -35,6 +35,7 @@ case class StageIF() extends Module
   pipeBundle.npc := npc.io.npc
   pipeBundle.pc := pc
   pipeBundle.instr := io.misc.imem.resp.bits.rdata
+  pipeBundle.valid := io.misc.imem.resp.valid
 
   when (!io.ctrl.stall) {
     when (io.ctrl.flush) {
@@ -56,8 +57,6 @@ case class StageIF() extends Module
   io.misc.imem.req.bits.addr := pc
   io.misc.imem.req.bits.wdata := DontCare
   io.ctrl.instr := DontCare
-
-  rtlDebug("pc: %x, instr: %x\n", io.pipe.pc, io.pipe.instr)
 }
 
 object StageIF extends App {

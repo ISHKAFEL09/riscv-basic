@@ -42,6 +42,7 @@ object Interfaces {
   case class IfPipeIO() extends PipeLineIO {
     val taken = Output(Bool())
     val npc = Output(UInt(xprWidth))
+    val valid = Output(Bool())
   }
 
   case class IfMiscIO() extends Bundle {
@@ -99,6 +100,7 @@ object Interfaces {
     val rs2Data = Output(UInt(xprWidth))
     val fwdRs1 = Input(UInt(xprWidth))
     val fwdRs2 = Input(UInt(xprWidth))
+    val valid = Output(Bool())
   }
 
   /* register file interface */

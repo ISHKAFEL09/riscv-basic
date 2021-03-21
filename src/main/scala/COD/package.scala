@@ -14,7 +14,11 @@ package object cod {
 
   implicit class ClockRelated(clk: Clock) {
     def waitSampling(condition: Bool): Unit = {
-      while (!condition.peek().litToBoolean) { clk.step(1) }
+      if (!condition.peek().litToBoolean) {
+        while (!condition.peek().litToBoolean) {
+          clk.step(1)
+        }
+      }
     }
   }
 
@@ -33,7 +37,7 @@ package object cod {
   }
 
   object Const {
-    val StartAddress = "h00000000".U(xprWidth)
+    val StartAddress = genConfig.startAddress.U(xprWidth)
 
     object PCSel {
       val npc :: branch :: exception :: _ = Enum(10)
@@ -218,5 +222,6 @@ package object cod {
     val innerIMem = true
     val debugOn = true
     val testCase = "tests/isa/rv32ui-p-add"
+    val startAddress = "h8000_0000"
   }
 }
