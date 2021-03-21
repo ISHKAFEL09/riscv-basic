@@ -29,7 +29,9 @@ case class StageWb() extends Module {
   rfWrite.addr := io.lastPipe.instr(11, 7)
   rfWrite.data := rdData
 
-  rtlDebug("[Stage Wb] pc: %x, instr: %x\n", io.lastPipe.pc, io.lastPipe.instr)
+  when (io.lastPipe.valid) {
+    rtlDebug("[Stage Wb] pc: %x, instr: %x\n", io.lastPipe.pc, io.lastPipe.instr)
+  }
 }
 
 object StageWb extends App {

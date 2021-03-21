@@ -15,6 +15,12 @@ import scala.collection.mutable
 import scala.io.Source
 import scala.util.Random
 
+object Config {
+  var cycles = 0
+  val passPc: Int = 0x80000600
+  val failPc: Int = 0x800005f0
+}
+
 case class MemoryPkg(wr: Boolean, addr: BigInt, data: BigInt) extends Package {
   override def toString: String = f" ${if (wr) "write" else "read"} addr: ${addr}%x, data: ${data}%x "
 }
@@ -62,6 +68,7 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       implicit val clk = dut.clock
 
       val imm = collection.mutable.Map.empty[BigInt, Byte]
+      val dmm = collection.mutable.Map.empty[BigInt, Byte]
       val imageBytes = getBytes(genConfig.testCase)
       for (i <- imageBytes.indices) imm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
 
@@ -73,7 +80,18 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       }
 
       fork {
-        clk.step(100)
+        DmmAgent(dmm).run()
+      }
+
+      fork {
+        var finish = false
+        while (!finish) {
+          val pc = dut.io.imm.req.bits.addr.peek().litValue()
+          if (pc.toInt == Config.failPc) { assert(false, "FAIL!!!"); finish = true }
+          if (pc.toInt == Config.passPc) { finish = true }
+          clk.step()
+          Config.cycles += 1
+        }
       }.join()
     }}
   }

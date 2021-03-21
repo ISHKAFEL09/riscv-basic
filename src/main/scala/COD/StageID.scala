@@ -79,10 +79,12 @@ case class StageID() extends Module {
 
   // pipe regs
   val regPipe = RegInit(0.U.asTypeOf(IdPipeIO()))
+  regPipe.valid := false.B
   when (!io.ctrl.stall) {
     when (io.ctrl.flush) {
       regPipe := 0.U.asTypeOf(IdPipeIO())
     } otherwise {
+      regPipe.valid := true.B
       regPipe.instr := instruction
       regPipe.pc := io.lastPipe.pc
       regPipe.aluOp1 := aluOp1

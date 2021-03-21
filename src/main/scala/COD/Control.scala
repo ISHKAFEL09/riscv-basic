@@ -47,6 +47,7 @@ case class Control() extends Module {
     e.reduce(_ || _)
   }
 
+//  val flush4Fence = (io.idStage.instr === Instruction.FENCE) || (io.idStage.instr === Instruction.FENCE_I)
   io.ifStage.stall := idStall || fullStall
   io.idStage.stall := idStall || fullStall
   io.exStage.stall := false.B

@@ -27,6 +27,7 @@ case class StageMem() extends Module {
   memReq.addr := io.lastPipe.aluOut
   memReq.wdata := io.lastPipe.memWdata
 
+  pipeReg.valid := io.lastPipe.valid
   when (!io.ctrl.stall) {
     when (io.ctrl.flush) {
       pipeReg := 0.U.asTypeOf(MemPipeIO())

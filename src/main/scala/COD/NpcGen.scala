@@ -7,7 +7,8 @@ class NpcGen(startAddress: UInt) extends Module {
   val io = IO(new NpcBundle)
 
   val taken = RegInit(false.B)
-  val npc = RegNext(io.pc + 4.U, init = startAddress)
+  val npc = RegInit(startAddress)
+  when (!io.stall) { npc := io.pc + 4.U }
 
   // TODO  fake btb
   io.taken := taken

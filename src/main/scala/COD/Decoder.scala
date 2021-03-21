@@ -22,6 +22,9 @@ case class Decoder() extends Module {
     Array(
       Instruction.BUBBLE -> List(InstrType.typeR, AluOpType.add, InstrFlag.nop),
 
+      Instruction.FENCE -> List(InstrType.typeR, AluOpType.add, InstrFlag.notReady),
+      Instruction.FENCE_I -> List(InstrType.typeR, AluOpType.add, InstrFlag.notReady),
+
       Instruction.ADDI -> List(InstrType.typeI, AluOpType.add, InstrFlag.nop),
       Instruction.SLTI -> List(InstrType.typeI, AluOpType.comp, InstrFlag.nop),
       Instruction.SLTIU -> List(InstrType.typeI, AluOpType.compu, InstrFlag.nop),
@@ -29,9 +32,9 @@ case class Decoder() extends Module {
       Instruction.ORI -> List(InstrType.typeI, AluOpType.or, InstrFlag.nop),
       Instruction.XORI -> List(InstrType.typeI, AluOpType.xor, InstrFlag.nop),
 
-      Instruction.SLLI -> List(InstrType.typeS, AluOpType.lshift, InstrFlag.isStore),
-      Instruction.SRLI -> List(InstrType.typeS, AluOpType.rshift, InstrFlag.isStore),
-      Instruction.SRAI -> List(InstrType.typeS, AluOpType.rshifta, InstrFlag.isStore),
+      Instruction.SLLI -> List(InstrType.typeS, AluOpType.lshift, InstrFlag.nop),
+      Instruction.SRLI -> List(InstrType.typeS, AluOpType.rshift, InstrFlag.nop),
+      Instruction.SRAI -> List(InstrType.typeS, AluOpType.rshifta, InstrFlag.nop),
 
       Instruction.LUI -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.nop),
       Instruction.AUIPC -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.nop),
@@ -60,8 +63,9 @@ case class Decoder() extends Module {
       Instruction.LW -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad),
       Instruction.SW -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore),
 
-      Instruction.ECALL -> List(InstrType.typeI, AluOpType.nop, InstrFlag.nop),
-      Instruction.EBREAK -> List(InstrType.typeI, AluOpType.nop, InstrFlag.nop),
+      Instruction.ECALL -> List(InstrType.typeI, AluOpType.nop, InstrFlag.notReady),
+      Instruction.EBREAK -> List(InstrType.typeI, AluOpType.nop, InstrFlag.notReady),
+      Instruction.MRET -> List(InstrType.typeI, AluOpType.nop, InstrFlag.notReady),
 
       Instruction.CSRRW -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
       Instruction.CSRRS -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
@@ -108,13 +112,14 @@ case class Decoder() extends Module {
 
   io.decode.rfWen := !(instrType === InstrType.typeB || instrType === InstrType.typeS)
 
-  io.decode.aluSrc1 := AluSrc.rf
+  val noUseRs1 = instrType === InstrType.typeU || instrType === InstrType.typeJ
+  io.decode.aluSrc1 := Mux(noUseRs1, AluSrc.nop, AluSrc.rf)
   io.decode.aluSrc2 := MuxCase(AluSrc.rf, Seq(
+    hasFlag(InstrFlag.isJump) -> AluSrc.pc,
+    hasFlag(InstrFlag.isCsr) -> AluSrc.csr,
     (instrType === InstrType.typeI) -> AluSrc.imm,
     (instrType === InstrType.typeU) -> AluSrc.imm,
-    (instrType === InstrType.typeJ) -> AluSrc.imm,
-    hasFlag(InstrFlag.isJump) -> AluSrc.pc,
-    hasFlag(InstrFlag.isCsr) -> AluSrc.csr
+    (instrType === InstrType.typeJ) -> AluSrc.imm
   ))
 
   io.decode.wbSrc := Mux(io.decode.memRen, WbSrc.mem, WbSrc.alu)
@@ -129,6 +134,10 @@ case class Decoder() extends Module {
     (instrType === InstrType.typeU) -> ImmType.typeU,
     (instrType === InstrType.typeJ) -> ImmType.typeJ
   ))
+
+  when (hasFlag(InstrFlag.notReady)) {
+    io.decode := 0.U.asTypeOf(DecodeIO())
+  }
 }
 
 object Decoder extends App {

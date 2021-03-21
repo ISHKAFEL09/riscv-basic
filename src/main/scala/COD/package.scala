@@ -40,7 +40,7 @@ package object cod {
     val StartAddress = genConfig.startAddress.U(xprWidth)
 
     object PCSel {
-      val npc :: branch :: exception :: _ = Enum(10)
+      val npc :: branch :: exception :: plus4 :: _ = Enum(10)
     }
 
     object BranchSel {
@@ -52,7 +52,7 @@ package object cod {
     }
 
     object AluSrc {
-      val rf :: imm :: pc :: csr :: _ = Enum(10)
+      val nop :: rf :: imm :: pc :: csr :: _ = Enum(10)
     }
 
     object WbSrc {
@@ -80,6 +80,7 @@ package object cod {
       val isStore = (1 << 2).U
       val isCsr = (1 << 3).U
       val isJump = (1 << 4).U
+      val notReady = (1 << 5).U
     }
 
     object ImmType {

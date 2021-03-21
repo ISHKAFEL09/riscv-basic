@@ -41,6 +41,7 @@ case class StageEx() extends Module {
 
   io.ctrl.instr := io.lastPipe.instr
   io.ctrl.rfWen := io.lastPipe.decode.rfWen
+  pipeReg.valid := io.lastPipe.valid
   when (!io.ctrl.stall) {
     when (io.ctrl.flush) {
       pipeReg := 0.U.asTypeOf(ExPipeIO())

@@ -13,7 +13,7 @@ sealed trait ControlIO extends Bundle {
 }
 
 sealed trait PipeLineIO extends Bundle {
-//  val valid = Output(Bool())
+  val valid = Output(Bool())
   val pc = Output(UInt(xprWidth))
   val instr = Output(UInt(32.W))
 }
@@ -42,7 +42,6 @@ object Interfaces {
   case class IfPipeIO() extends PipeLineIO {
     val taken = Output(Bool())
     val npc = Output(UInt(xprWidth))
-    val valid = Output(Bool())
   }
 
   case class IfMiscIO() extends Bundle {
@@ -122,6 +121,7 @@ object Interfaces {
     val update = Input(Bool())
     val taken = Output(Bool())
     val npc = Output(UInt(xprWidth))
+    val stall = Input(Bool())
   }
 
   /* forward unit interface */

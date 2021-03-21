@@ -35,24 +35,27 @@ case class StageIF() extends Module
   pipeBundle.npc := npc.io.npc
   pipeBundle.pc := pc
   pipeBundle.instr := io.misc.imem.resp.bits.rdata
-  pipeBundle.valid := io.misc.imem.resp.valid
+  pipeBundle.valid := DontCare
 
+  pipeRegs.valid := false.B
   when (!io.ctrl.stall) {
     when (io.ctrl.flush) {
       pipeRegs.instr := BUBBLE.U
     } otherwise {
       pipeRegs := pipeBundle
+      pipeRegs.valid := true.B
     }
     pc := pcMux
   }
 
   npc.io.pc := pcMux
+  npc.io.stall := io.ctrl.stall
   npc.io.update := io.misc.branchCheck.update
   npc.io.pcIndex := io.misc.branchCheck.pcIndex
 
   io.pipe := pipeRegs
 
-  io.misc.imem.req.valid := RegNext(!(io.ctrl.stall || io.ctrl.flush))
+  io.misc.imem.req.valid := RegNext(!io.ctrl.stall)
   io.misc.imem.req.bits.wr := false.B
   io.misc.imem.req.bits.addr := pc
   io.misc.imem.req.bits.wdata := DontCare
