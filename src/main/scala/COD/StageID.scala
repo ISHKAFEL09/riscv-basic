@@ -8,7 +8,7 @@ import chisel3.util.MuxLookup
 import Const._
 
 @chiselName
-class StageID(implicit conf: GenConfig) extends Module {
+case class StageID() extends Module {
   val io = IO(new Bundle() {
     val lastPipe = Flipped(new IfPipeIO)
     val ctrl = new IdCtrlIO
@@ -68,7 +68,7 @@ class StageID(implicit conf: GenConfig) extends Module {
   val branchPc = MuxLookup(io.ctrl.decode.brTarget, io.lastPipe.pc + 4.U, Seq(
     BranchTarget.jal -> (io.lastPipe.pc + immData),
     BranchTarget.branch -> (io.lastPipe.pc + immData),
-    BranchTarget.jalr -> Cat((aluOp1 + immData)(conf.xprlen - 1, 1), false.B)
+    BranchTarget.jalr -> Cat((aluOp1 + immData)(xprWidth.get - 1, 1), false.B)
   ))
   io.ctrl.branchErr := taken =/= io.lastPipe.taken
   io.misc.branchCheck.update := io.ctrl.branchErr
@@ -107,6 +107,5 @@ class StageID(implicit conf: GenConfig) extends Module {
 }
 
 object StageID extends App {
-  implicit val conf = GenConfig()
   new stage.ChiselStage().emitVerilog(new StageID(), Array("--target-dir", "generated"))
 }

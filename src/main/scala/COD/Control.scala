@@ -5,7 +5,7 @@ import Interfaces._
 import chisel3.util._
 import Const._
 
-class Control extends Module {
+case class Control() extends Module {
   val io = IO(new CtrlIO)
 
   val forwardUnit = Module(new ForwardUnit)

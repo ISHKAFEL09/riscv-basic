@@ -21,8 +21,8 @@ case class StageMem() extends Module {
   io.ctrl.decode := io.lastPipe.decode
   io.ctrl.rdData := io.lastPipe.aluOut
 
-  io.misc.req.valid := io.lastPipe.decode.memRen || io.lastPipe.decode.memWen
-  val memReq = io.misc.req.bits
+  io.misc.dmm.req.valid := io.lastPipe.decode.memRen || io.lastPipe.decode.memWen
+  val memReq = io.misc.dmm.req.bits
   memReq.wr := io.lastPipe.decode.memWen
   memReq.addr := io.lastPipe.aluOut
   memReq.wdata := io.lastPipe.memWdata
@@ -35,7 +35,7 @@ case class StageMem() extends Module {
       pipeReg.instr := io.lastPipe.instr
       pipeReg.aluOut := io.lastPipe.aluOut
       pipeReg.decode := io.lastPipe.decode
-      pipeReg.memRdata := io.misc.resp.bits.rdata
+      pipeReg.memRdata := io.misc.dmm.resp.bits.rdata
     }
   } otherwise {
     pipeReg.decode := 0.U.asTypeOf(DecodeIO())

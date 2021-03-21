@@ -8,7 +8,7 @@ import Const._
 case class Csr() extends Module {
   val io = IO(CsrIO())
 
-  val csrRegs = Reg(Vec(64, UInt(xprWidth)))
+  val csrRegs = Mem(64, UInt(xprWidth))
 
   val index = io.req.bits.csr
 

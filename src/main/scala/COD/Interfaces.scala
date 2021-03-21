@@ -102,14 +102,13 @@ object Interfaces {
   }
 
   /* register file interface */
-  class RegFileIo(implicit conf: GenConfig) extends Bundle {
-    val regWidth = conf.xprlen.W
+  class RegFileIo() extends Bundle {
     val rs1 = Input(UInt(5.W))
     val rs2 = Input(UInt(5.W))
     val rd = Input(UInt(5.W))
-    val dataRs1 = Output(UInt(regWidth))
-    val dataRs2 = Output(UInt(regWidth))
-    val dataRd = Input(UInt(regWidth))
+    val dataRs1 = Output(UInt(xprWidth))
+    val dataRs2 = Output(UInt(xprWidth))
+    val dataRd = Input(UInt(xprWidth))
     val wren = Input(Bool())
     override def cloneType = { new RegFileIo().asInstanceOf[this.type] }
   }
@@ -284,8 +283,7 @@ object Interfaces {
   }
 
   case class MemMiscIO() extends Bundle {
-    val req = ValidIO(MemReq())
-    val resp = Flipped(ValidIO(MemResp()))
+    val dmm = Flipped(MemoryIO())
   }
 
   // wb stage interface

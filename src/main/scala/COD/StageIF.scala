@@ -9,7 +9,7 @@ import firrtl.annotations._
 import firrtl.AttributeAnnotation
 
 @chiselName
-class StageIF(implicit conf: GenConfig) extends Module
+case class StageIF() extends Module
 {
   val io = IO(new Bundle() {
     val ctrl = IfCtrlIO()
@@ -61,6 +61,5 @@ class StageIF(implicit conf: GenConfig) extends Module
 }
 
 object StageIF extends App {
-  implicit val conf = GenConfig()
   new stage.ChiselStage().emitVerilog(new StageIF(), Array("--target-dir", "generated"))
 }

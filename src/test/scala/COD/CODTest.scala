@@ -15,7 +15,7 @@ import scala.util.Random
 class CODTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   behavior of "CODTest"
 
-  implicit val conf = GenConfig()
+  implicit val conf = genConfig
   it should "pass" in {
     test(new StageIF) { c =>
       c.io.ctrl.flush.poke(0.B)

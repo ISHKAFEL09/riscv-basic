@@ -4,9 +4,13 @@ import chisel3.util._
 import chiseltest._
 
 package object cod {
+  case class BaseConfig() extends GenConfig
+
+  var genConfig: GenConfig = BaseConfig()
+
   val ctrlSize: Width = 4.W
-  val xprWidth = GenConfig().xprlen.W
-  val btbWidth = log2Up(GenConfig().btbSize).W
+  val xprWidth = genConfig.xprlen.W
+  val btbWidth = log2Up(genConfig.btbSize).W
 
   implicit class ClockRelated(clk: Clock) {
     def waitSampling(condition: Bool): Unit = {
@@ -19,13 +23,13 @@ package object cod {
   }
 
   def rtlDebug(msg: String, data: Bits*) = {
-    if (GenConfig().debugOn) {
+    if (genConfig.debugOn) {
       printf(msg, data: _*)
     }
   }
 
   def simDebug(msg: String) = {
-    if (GenConfig().debugOn) println(msg)
+    if (genConfig.debugOn) println(msg)
   }
 
   object Const {
@@ -203,7 +207,7 @@ package object cod {
     }
   }
 
-  case class GenConfig() {
+  sealed abstract class GenConfig() {
     val xprlen = 32
     val nxpr = 32
     val btbSize = 1024

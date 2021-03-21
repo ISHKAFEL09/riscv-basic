@@ -3,10 +3,10 @@ package cod
 import chisel3._
 import Interfaces._
 
-class Registers(implicit conf: GenConfig) extends Module {
-  val regWidth = conf.xprlen.W
+class Registers() extends Module {
+  val regWidth = xprWidth
   val io = IO(new RegFileIo())
-  val regFile = Mem(conf.nxpr, UInt(regWidth))
+  val regFile = Mem(32, UInt(regWidth))
 
   io.dataRs1 := 0.U
   io.dataRs2 := 0.U
@@ -23,6 +23,5 @@ class Registers(implicit conf: GenConfig) extends Module {
 }
 
 object Registers extends App {
-  implicit val conf = GenConfig()
   new stage.ChiselStage().emitVerilog(new Registers(), Array("--target-dir", "generated"))
 }
