@@ -21,6 +21,7 @@ case class StageID() extends Module {
 
   // registers file
   val regFile = Module(new Registers())
+  io.misc.debug <> regFile.io.debug
   val instruction = io.lastPipe.instr
   val rs1 = instruction(19, 15)
   val rs2 = instruction(24, 20)
@@ -79,12 +80,10 @@ case class StageID() extends Module {
 
   // pipe regs
   val regPipe = RegInit(0.U.asTypeOf(IdPipeIO()))
-  regPipe.valid := false.B
   when (!io.ctrl.stall) {
     when (io.ctrl.flush) {
       regPipe := 0.U.asTypeOf(IdPipeIO())
     } otherwise {
-      regPipe.valid := true.B
       regPipe.instr := instruction
       regPipe.pc := io.lastPipe.pc
       regPipe.aluOp1 := aluOp1
@@ -107,6 +106,7 @@ case class StageID() extends Module {
   io.ctrl.instr := io.lastPipe.instr
   // pipeline io assign
   io.pipe := regPipe
+  io.pipe.decode.valid := io.lastPipe.valid
 }
 
 object StageID extends App {

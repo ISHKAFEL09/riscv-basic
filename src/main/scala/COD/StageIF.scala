@@ -23,7 +23,8 @@ case class StageIF() extends Module
   val npc = Module(new NpcGen(StartAddress))
   val pcMux = MuxLookup(io.ctrl.pcSel, npc.io.npc, Seq(
     PCSel.branch -> io.misc.branchCheck.pcBranch,
-    PCSel.exception -> 0.U
+    PCSel.exception -> 0.U,
+    PCSel.system -> SystemCallAddress
   ))
   val pipeBundle = Wire(new IfPipeIO)
   val pipeRegs = RegInit(0.U.asTypeOf(new IfPipeIO))

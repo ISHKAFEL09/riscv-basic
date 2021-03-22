@@ -15,12 +15,6 @@ import scala.collection.mutable
 import scala.io.Source
 import scala.util.Random
 
-object Config {
-  var cycles = 0
-  val passPc: Int = 0x80000600
-  val failPc: Int = 0x800005f0
-}
-
 case class MemoryPkg(wr: Boolean, addr: BigInt, data: BigInt) extends Package {
   override def toString: String = f" ${if (wr) "write" else "read"} addr: ${addr}%x, data: ${data}%x "
 }
@@ -41,9 +35,13 @@ abstract class MemoryAgent(val bus: MemoryIO)(implicit val clk: Clock) {
         }
       } else {
         var rdata: BigInt = 0
-        for (i <- (0 to 3).reverse) {
-          val m: BigInt = memory(addr + i)
-          rdata = (rdata << 8) + (if (m >= 0) m else m + 256)
+        if (memory.contains(addr)) {
+          for (i <- (0 to 3).reverse) {
+            val m: BigInt = memory(addr + i)
+            rdata = (rdata << 8) + (if (m >= 0) m else m + 256)
+          }
+        } else {
+          rdata = BigInt(Const.BUBBLE.dropWhile(_ > '1'), 2)
         }
         resp.rdata.poke(rdata.U)
       }
@@ -63,36 +61,52 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     bytes
   }
 
-  it should "pass riscv test" in {
-    test(Tile()).withAnnotations(Seq(WriteVcdAnnotation)) { dut => {
-      implicit val clk = dut.clock
+  for {
+    f <- new File("tests/isa").listFiles()
+    testCasePattern = ("""^tests\\isa\\rv32ui-p-[a-z_]+$"""r).findFirstIn(f.getPath)
+    if testCasePattern.isDefined
+    testCase = testCasePattern.get
+  } {
+    it should s"pass riscv ${testCase}" in {
+      test(Tile()).withAnnotations(Seq(WriteVcdAnnotation)) { dut => {
+        implicit val clk = dut.clock
 
-      val imm = collection.mutable.Map.empty[BigInt, Byte]
-      val dmm = collection.mutable.Map.empty[BigInt, Byte]
-      val imageBytes = getBytes(genConfig.testCase)
-      for (i <- imageBytes.indices) imm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
+        val imm = collection.mutable.Map.empty[BigInt, Byte]
+        val dmm = collection.mutable.Map.empty[BigInt, Byte]
+        val imageBytes = getBytes(testCase)
+        for (i <- imageBytes.indices) imm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
 
-      case class ImmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.imm)
-      case class DmmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.dmm)
+        case class ImmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.imm)
+        case class DmmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.dmm)
 
-      fork {
-        ImmAgent(imm).run()
-      }
-
-      fork {
-        DmmAgent(dmm).run()
-      }
-
-      fork {
-        var finish = false
-        while (!finish) {
-          val pc = dut.io.imm.req.bits.addr.peek().litValue()
-          if (pc.toInt == Config.failPc) { assert(false, "FAIL!!!"); finish = true }
-          if (pc.toInt == Config.passPc) { finish = true }
-          clk.step()
-          Config.cycles += 1
+        fork {
+          ImmAgent(imm).run()
         }
-      }.join()
-    }}
+
+        fork {
+          DmmAgent(dmm).run()
+        }
+
+        fork {
+          var finish = false
+          var cycles = 1
+          while (!finish) {
+            clk.step()
+            val pc = dut.io.imm.req.bits.addr.peek().litValue()
+            if (pc.toInt == genConfig.SystemCallAddress.toInt) {
+              finish = true
+            }
+            cycles += 1
+            assert(cycles < 1000, "Timeout!!!")
+          }
+          dut.io.debug.rfIndex.poke(3.U)
+          clk.step(3)
+          val gp = dut.io.debug.rfData.peek().litValue()
+          assert(gp == 1, f"gp is $gp, error code is ${gp >> 1}")
+          println(f"finish test in $cycles cycles")
+        }.join()
+      }
+      }
+    }
   }
 }

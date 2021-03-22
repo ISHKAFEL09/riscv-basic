@@ -6,7 +6,7 @@ import Interfaces._
 class Registers() extends Module {
   val regWidth = xprWidth
   val io = IO(new RegFileIo())
-  val regFile = Mem(32, UInt(regWidth))
+  val regFile = Mem(genConfig.nxpr, UInt(regWidth))
 
   io.dataRs1 := 0.U
   io.dataRs2 := 0.U
@@ -20,6 +20,8 @@ class Registers() extends Module {
   when (io.wren && io.rd =/= 0.U) {
     regFile(io.rd) := io.dataRd
   }
+
+  io.debug.rfData := Mux(io.debug.rfIndex === 0.U, 0.U, regFile(io.debug.rfIndex))
 }
 
 object Registers extends App {

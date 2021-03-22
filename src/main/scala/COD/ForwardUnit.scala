@@ -15,10 +15,10 @@ class ForwardUnit extends Module {
   val wrEnWB = io.f2wb.ctrl.rfWen
   val isLoad = io.f2mem.ctrl.memRen
 
-  val hazardRs1Mem = (rs1 === rdMem) && wrEnMem && (!isLoad)
-  val hazardRs2Mem = (rs2 === rdMem) && wrEnMem && (!isLoad)
-  val hazardRs1WB = (rs1 === rdWB) && wrEnWB
-  val hazardRs2WB = (rs2 === rdWB) && wrEnWB
+  val hazardRs1Mem = (rs1 =/= 0.U) && (rs1 === rdMem) && wrEnMem && (!isLoad)
+  val hazardRs2Mem = (rs2 =/= 0.U) && (rs2 === rdMem) && wrEnMem && (!isLoad)
+  val hazardRs1WB = (rs1 =/= 0.U) && (rs1 === rdWB) && wrEnWB
+  val hazardRs2WB = (rs2 =/= 0.U) && (rs2 === rdWB) && wrEnWB
 
   io.f2id.fwdRs1 := MuxCase(io.f2id.rs1Data, Seq(
     hazardRs1Mem -> io.f2mem.wbData,

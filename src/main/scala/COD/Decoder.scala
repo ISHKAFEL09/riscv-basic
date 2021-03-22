@@ -14,7 +14,7 @@ case class Decoder() extends Module {
     val decode = Output(new DecodeIO)
   })
 
-  io := DontCare
+  io.decode.valid := io.valid
 
   val decLevel0 = ListLookup(io.instr,
       //   instrType        aluOpType      flag
@@ -32,9 +32,9 @@ case class Decoder() extends Module {
       Instruction.ORI -> List(InstrType.typeI, AluOpType.or, InstrFlag.nop),
       Instruction.XORI -> List(InstrType.typeI, AluOpType.xor, InstrFlag.nop),
 
-      Instruction.SLLI -> List(InstrType.typeS, AluOpType.lshift, InstrFlag.nop),
-      Instruction.SRLI -> List(InstrType.typeS, AluOpType.rshift, InstrFlag.nop),
-      Instruction.SRAI -> List(InstrType.typeS, AluOpType.rshifta, InstrFlag.nop),
+      Instruction.SLLI -> List(InstrType.typeI, AluOpType.lshift, InstrFlag.nop),
+      Instruction.SRLI -> List(InstrType.typeI, AluOpType.rshift, InstrFlag.nop),
+      Instruction.SRAI -> List(InstrType.typeI, AluOpType.rshifta, InstrFlag.nop),
 
       Instruction.LUI -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.nop),
       Instruction.AUIPC -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.nop),
@@ -63,7 +63,7 @@ case class Decoder() extends Module {
       Instruction.LW -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad),
       Instruction.SW -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore),
 
-      Instruction.ECALL -> List(InstrType.typeI, AluOpType.nop, InstrFlag.notReady),
+      Instruction.ECALL -> List(InstrType.typeI, AluOpType.nop, InstrFlag.isSystem),
       Instruction.EBREAK -> List(InstrType.typeI, AluOpType.nop, InstrFlag.notReady),
       Instruction.MRET -> List(InstrType.typeI, AluOpType.nop, InstrFlag.notReady),
 
@@ -138,6 +138,8 @@ case class Decoder() extends Module {
   when (hasFlag(InstrFlag.notReady)) {
     io.decode := 0.U.asTypeOf(DecodeIO())
   }
+
+  io.decode.isSystem := hasFlag(InstrFlag.isSystem)
 }
 
 object Decoder extends App {

@@ -81,7 +81,8 @@ case class Control() extends Module {
   val hasException = misc.exception.reduce(_ || _)
   io.ifStage.pcSel := MuxCase(PCSel.npc, Seq(
     io.ifStage.flush -> PCSel.branch,
-    hasException -> PCSel.exception
+    hasException -> PCSel.exception,
+    decoder.io.decode.isSystem -> PCSel.system
   ))
 }
 

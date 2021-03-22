@@ -29,8 +29,11 @@ case class StageWb() extends Module {
   rfWrite.addr := io.lastPipe.instr(11, 7)
   rfWrite.data := rdData
 
-  when (io.lastPipe.valid) {
-    rtlDebug("[Stage Wb] pc: %x, instr: %x\n", io.lastPipe.pc, io.lastPipe.instr)
+  val cycles = RegInit(0.U(xprWidth))
+
+  when (io.lastPipe.decode.valid) {
+    cycles := cycles + 1.U
+    rtlDebug("[Stage Wb] cycle: %d, pc: %x, instr: %x\n", cycles, io.lastPipe.pc, io.lastPipe.instr)
   }
 }
 

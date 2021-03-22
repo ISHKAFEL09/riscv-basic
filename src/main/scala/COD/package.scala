@@ -39,8 +39,10 @@ package object cod {
   object Const {
     val StartAddress = genConfig.startAddress.U(xprWidth)
 
+    val SystemCallAddress = genConfig.SystemCallAddress.U(xprWidth)
+
     object PCSel {
-      val npc :: branch :: exception :: plus4 :: _ = Enum(10)
+      val npc :: branch :: exception :: plus4 :: system :: _ = Enum(10)
     }
 
     object BranchSel {
@@ -81,6 +83,7 @@ package object cod {
       val isCsr = (1 << 3).U
       val isJump = (1 << 4).U
       val notReady = (1 << 5).U
+      val isSystem = (1 << 6).U
     }
 
     object ImmType {
@@ -91,7 +94,7 @@ package object cod {
       val csrRw :: csrRs :: csrRc :: csrRwI :: csrRsI :: csrRcI :: _ = Enum(10)
     }
 
-    val BUBBLE = "b0000_0000_0000_0000_0100_0000_0011_0011"
+    val BUBBLE = "b00000000000000000100000000110011"
 
     object Instruction {
       val BUBBLE             = BitPat(Const.BUBBLE)
@@ -216,13 +219,13 @@ package object cod {
     val xprlen = 32
     val nxpr = 32
     val btbSize = 1024
-    val nxprbits = log2Ceil(nxpr)
+    val nxprbits = log2Up(nxpr)
     val rvc = false
     val vm = false
     val usingUser = false
     val innerIMem = true
     val debugOn = true
-    val testCase = "tests/isa/rv32ui-p-add"
-    val startAddress = "h8000_0000"
+    val startAddress = BigInt("80000000", 16)
+    val SystemCallAddress = BigInt("1216", 16)
   }
 }

@@ -13,7 +13,7 @@ sealed trait ControlIO extends Bundle {
 }
 
 sealed trait PipeLineIO extends Bundle {
-  val valid = Output(Bool())
+//  val valid = Output(Bool())
   val pc = Output(UInt(xprWidth))
   val instr = Output(UInt(32.W))
 }
@@ -42,6 +42,7 @@ object Interfaces {
   case class IfPipeIO() extends PipeLineIO {
     val taken = Output(Bool())
     val npc = Output(UInt(xprWidth))
+    val valid = Output(Bool())
   }
 
   case class IfMiscIO() extends Bundle {
@@ -83,6 +84,7 @@ object Interfaces {
     val rf = IdRfWriteIO()
     val branchCheck = IfBranchUpdate()
     val csr = Flipped(CsrIO())
+    val debug = Flipped(DebugRegfileIO())
   }
 
   case class IdPipeIO() extends PipeLineIO {
@@ -111,7 +113,7 @@ object Interfaces {
     val dataRs2 = Output(UInt(xprWidth))
     val dataRd = Input(UInt(xprWidth))
     val wren = Input(Bool())
-    override def cloneType = { new RegFileIo().asInstanceOf[this.type] }
+    val debug = Flipped(DebugRegfileIO())
   }
 
   /* npc gen interface */
@@ -162,7 +164,7 @@ object Interfaces {
 
   /* controller interface */
   case class DecodeIO() extends Bundle {
-    val pcSrc = UInt(ctrlSize)
+//    val pcSrc = UInt(ctrlSize)
     val aluSrc1 = UInt(ctrlSize)
     val aluSrc2 = UInt(ctrlSize)
     val aluOp = UInt(ctrlSize)
@@ -174,6 +176,8 @@ object Interfaces {
     val isCsr = Bool()
     val immType = UInt(ctrlSize)
     val brTarget = UInt(ctrlSize)
+    val valid = Bool()
+    val isSystem = Bool()
   }
 
   case class CtrlMiscIO() extends Bundle {
@@ -296,5 +300,16 @@ object Interfaces {
 
   case class WbMiscIO() extends Bundle {
     val rfWrite = Flipped(IdRfWriteIO())
+  }
+
+  // debug module
+  case class DebugRegfileIO() extends Bundle {
+    val rfIndex = Output(UInt(genConfig.nxprbits.W))
+    val rfData = Input(UInt(xprWidth))
+  }
+
+  case class DebugIO() extends Bundle {
+    val d2rf = DebugRegfileIO()
+    val debugRf = Flipped(DebugRegfileIO())
   }
 }

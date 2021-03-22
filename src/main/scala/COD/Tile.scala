@@ -8,6 +8,7 @@ case class Tile() extends Module {
   val io = IO(new Bundle() {
     val imm = Flipped(MemoryIO())
     val dmm = Flipped(MemoryIO())
+    val debug = Flipped(DebugRegfileIO())
   })
 
   val control = Module(Control())
@@ -27,6 +28,7 @@ case class Tile() extends Module {
   stageId.io.ctrl <> control.io.idStage
   stageId.io.misc.rf <> stageWb.io.misc.rfWrite
   stageId.io.misc.csr <> csr.io
+  stageId.io.misc.debug <> io.debug
   stageId.io.pipe <> stageEx.io.lastPipe
 
   stageEx.io.ctrl <> control.io.exStage
