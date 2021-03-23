@@ -50,8 +50,8 @@ case class Decoder() extends Module {
       Instruction.SUB -> List(InstrType.typeR, AluOpType.sub, InstrFlag.nop),
       Instruction.SRA -> List(InstrType.typeR, AluOpType.rshifta, InstrFlag.nop),
 
-      Instruction.JAL -> List(InstrType.typeJ, AluOpType.nop, InstrFlag.isJump),
-      Instruction.JALR -> List(InstrType.typeI, AluOpType.nop, InstrFlag.isJump),
+      Instruction.JAL -> List(InstrType.typeJ, AluOpType.bypass2, InstrFlag.isJump),
+      Instruction.JALR -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isJump),
 
       Instruction.BEQ -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
       Instruction.BNE -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
@@ -62,6 +62,12 @@ case class Decoder() extends Module {
 
       Instruction.LW -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad),
       Instruction.SW -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore),
+      Instruction.LH -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad | InstrFlag.isHalfWord),
+      Instruction.SH -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore | InstrFlag.isHalfWord),
+      Instruction.LB -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad | InstrFlag.isByte),
+      Instruction.SB -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore | InstrFlag.isByte),
+      Instruction.LHU -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad | InstrFlag.isHalfWord | InstrFlag.isUnsigned),
+      Instruction.LBU -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad | InstrFlag.isByte | InstrFlag.isUnsigned),
 
       Instruction.ECALL -> List(InstrType.typeI, AluOpType.nop, InstrFlag.isSystem),
       Instruction.EBREAK -> List(InstrType.typeI, AluOpType.nop, InstrFlag.notReady),
@@ -115,6 +121,7 @@ case class Decoder() extends Module {
   val noUseRs1 = instrType === InstrType.typeU || instrType === InstrType.typeJ
   io.decode.aluSrc1 := Mux(noUseRs1, AluSrc.nop, AluSrc.rf)
   io.decode.aluSrc2 := MuxCase(AluSrc.rf, Seq(
+    hasFlag(InstrFlag.isStore) -> AluSrc.imm,
     hasFlag(InstrFlag.isJump) -> AluSrc.pc,
     hasFlag(InstrFlag.isCsr) -> AluSrc.csr,
     (instrType === InstrType.typeI) -> AluSrc.imm,
@@ -140,6 +147,13 @@ case class Decoder() extends Module {
   }
 
   io.decode.isSystem := hasFlag(InstrFlag.isSystem)
+
+  io.decode.useRs1 := !noUseRs1
+  io.decode.useRs2 := io.decode.aluSrc2 === AluSrc.rf || hasFlag(InstrFlag.isStore)
+
+  io.decode.isHalfWord := hasFlag(InstrFlag.isHalfWord)
+  io.decode.isByte := hasFlag(InstrFlag.isByte)
+  io.decode.isUnsigned := hasFlag(InstrFlag.isUnsigned)
 }
 
 object Decoder extends App {

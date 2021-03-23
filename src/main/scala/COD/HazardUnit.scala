@@ -16,10 +16,10 @@ case class HazardUnit() extends Module {
   val rfWenMem = io.memRfWen
   val isLoad = io.memRen
 
-  val hazardRs1Ex = (rs1 =/= 0.U) && (io.opSel1 === AluSrc.rf) && (rs1 === rdEx) && rfWenEx
-  val hazardRs2Ex = (rs2 =/= 0.U) && (io.opSel2 === AluSrc.rf) && (rs2 === rdEx) && rfWenEx
-  val hazardRs1Mem = (rs1 =/= 0.U) && (io.opSel1 === AluSrc.rf) && (rs1 === rdMem) && rfWenMem && isLoad
-  val hazardRs2Mem = (rs2 =/= 0.U) && (io.opSel2 === AluSrc.rf) && (rs2 === rdMem) && rfWenMem && isLoad
+  val hazardRs1Ex = (rs1 =/= 0.U) && io.useRs1 && (rs1 === rdEx) && rfWenEx
+  val hazardRs2Ex = (rs2 =/= 0.U) && io.useRs2 && (rs2 === rdEx) && rfWenEx
+  val hazardRs1Mem = (rs1 =/= 0.U) && io.useRs1 && (rs1 === rdMem) && rfWenMem && isLoad
+  val hazardRs2Mem = (rs2 =/= 0.U) && io.useRs2 && (rs2 === rdMem) && rfWenMem && isLoad
 
   io.idStall := hazardRs1Ex || hazardRs2Ex || hazardRs1Mem || hazardRs2Mem
   io.ifFlush := io.branchErr

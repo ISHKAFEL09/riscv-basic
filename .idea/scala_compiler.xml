@@ -8,6 +8,7 @@
       </parameters>
     </profile>
     <profile name="sbt 2" modules="ChiselPrj">
+      <option name="postfixOps" value="true" />
       <parameters>
         <parameter value="-Xsource:2.11" />
       </parameters>

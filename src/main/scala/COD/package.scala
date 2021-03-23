@@ -84,6 +84,9 @@ package object cod {
       val isJump = (1 << 4).U
       val notReady = (1 << 5).U
       val isSystem = (1 << 6).U
+      val isHalfWord = (1 << 7).U
+      val isUnsigned = (1 << 8).U
+      val isByte = (1 << 9).U
     }
 
     object ImmType {

@@ -36,6 +36,7 @@ case class StageID() extends Module {
 
   // immediate
   val immData = MuxLookup(io.ctrl.decode.immType, 0.U, Seq(
+    ImmType.addPc -> (Cat(instruction(31, 12), 0.U(12.W)) + io.lastPipe.pc),
     ImmType.typeI -> Cat(Fill(21, instruction(31)), instruction(30, 20)),
     ImmType.typeS -> Cat(Fill(21, instruction(31)), instruction(30, 25), instruction(11, 7)),
     ImmType.typeB -> Cat(Fill(20, instruction(31)), instruction(7), instruction(30, 25), instruction(11, 8), false.B),

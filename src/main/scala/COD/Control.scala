@@ -37,8 +37,8 @@ case class Control() extends Module {
   hazard.io.exRfWen <> io.exStage.rfWen
   hazard.io.memRfWen <> io.memStage.decode.rfWen
   hazard.io.memRen <> io.memStage.decode.memRen
-  hazard.io.opSel1 <> decoder.io.decode.aluSrc1
-  hazard.io.opSel2 <> decoder.io.decode.aluSrc2
+  hazard.io.useRs1 <> decoder.io.decode.useRs1
+  hazard.io.useRs2 <> decoder.io.decode.useRs2
   val idStall = hazard.io.idStall
   val ifFlush = hazard.io.ifFlush
   

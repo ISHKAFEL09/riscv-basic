@@ -28,7 +28,7 @@ abstract class MemoryAgent(val bus: MemoryIO)(implicit val clk: Clock) {
       bus.resp.valid.poke(false.B)
       clk.waitSampling(bus.req.valid)
       bus.resp.valid.poke(true.B)
-      val addr = req.addr.peek().litValue() >> 2 << 2
+      val addr = req.addr.peek().litValue()// >> 2 << 2
       if (req.wr.peek().litToBoolean) {
         for (i <- 0 to 3) {
           memory(addr + i) = (req.wdata.peek().litValue() >> (8 * i)).toByte
@@ -74,7 +74,10 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         val imm = collection.mutable.Map.empty[BigInt, Byte]
         val dmm = collection.mutable.Map.empty[BigInt, Byte]
         val imageBytes = getBytes(testCase)
-        for (i <- imageBytes.indices) imm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
+        for (i <- imageBytes.indices) {
+          imm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
+          dmm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
+        }
 
         case class ImmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.imm)
         case class DmmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.dmm)

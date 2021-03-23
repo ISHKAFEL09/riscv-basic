@@ -19,25 +19,25 @@ case class StageEx() extends Module {
   val pipeReg = RegInit(0.U.asTypeOf(ExPipeIO()))
 
   // alu
-  val aluOp1 = io.lastPipe.aluOp1.asSInt()
-  val aluOp2 = io.lastPipe.aluOp2.asSInt()
-  val shiftVal = aluOp2(4, 0).asUInt()
-  val aluOut = MuxLookup(io.lastPipe.decode.aluOp, 0.S, Seq(
+  val aluOp1 = io.lastPipe.aluOp1
+  val aluOp2 = io.lastPipe.aluOp2
+  val shiftVal = aluOp2(4, 0)
+  val aluOut = MuxLookup(io.lastPipe.decode.aluOp, 0.U, Seq(
     AluOpType.and -> (aluOp1 & aluOp2),
     AluOpType.add -> (aluOp1 + aluOp2),
-    AluOpType.addu -> (aluOp1.asUInt() + aluOp2.asUInt()).asSInt(),
+    AluOpType.addu -> (aluOp1 + aluOp2),
     AluOpType.bypass1 -> aluOp1,
     AluOpType.bypass2 -> aluOp2,
-    AluOpType.comp -> (aluOp1 < aluOp2).asSInt(),
-    AluOpType.compu -> (aluOp1.asUInt() < aluOp2.asUInt()).asSInt(),
-    AluOpType.or -> (aluOp1 | aluOp2).asSInt(),
-    AluOpType.nop -> 0.S,
+    AluOpType.comp -> (aluOp1.asSInt() < aluOp2.asSInt()),
+    AluOpType.compu -> (aluOp1 < aluOp2),
+    AluOpType.or -> (aluOp1 | aluOp2),
+    AluOpType.nop -> 0.U,
     AluOpType.sub -> (aluOp1 - aluOp2),
     AluOpType.xor -> (aluOp1 ^ aluOp2),
-    AluOpType.lshift -> (aluOp1.asUInt() << shiftVal).asSInt(),
-    AluOpType.rshift -> (aluOp1.asUInt() >> shiftVal).asSInt(),
-    AluOpType.rshifta -> (aluOp1 >> shiftVal).asSInt()
-  )).asUInt()
+    AluOpType.lshift -> (aluOp1 << shiftVal),
+    AluOpType.rshift -> (aluOp1 >> shiftVal),
+    AluOpType.rshifta -> (aluOp1.asSInt() >> shiftVal).asUInt()
+  ))
 
   io.ctrl.instr := io.lastPipe.instr
   io.ctrl.rfWen := io.lastPipe.decode.rfWen

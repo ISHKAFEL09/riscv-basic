@@ -150,8 +150,8 @@ object Interfaces {
   /* harzard interface */
   case class HazardIO() extends Bundle {
     val instr = Input(UInt(32.W))
-    val opSel1 = Input(UInt(ctrlSize))
-    val opSel2 = Input(UInt(ctrlSize))
+    val useRs1 = Input(Bool())
+    val useRs2 = Input(Bool())
     val branchErr = Input(Bool())
     val exRfWen = Input(Bool())
     val exInstr = Input(UInt(32.W))
@@ -178,6 +178,11 @@ object Interfaces {
     val brTarget = UInt(ctrlSize)
     val valid = Bool()
     val isSystem = Bool()
+    val useRs1 = Bool()
+    val useRs2 = Bool()
+    val isHalfWord = Bool()
+    val isByte = Bool()
+    val isUnsigned = Bool()
   }
 
   case class CtrlMiscIO() extends Bundle {
