@@ -23,6 +23,8 @@ object Interfaces {
     val wr = Bool()
     val addr = UInt(xprWidth)
     val wdata = UInt(xprWidth)
+    val fence = Bool()
+    val mask = Vec(xprWidth.get / 8, Bool())
   }
 
   case class MemResp() extends Bundle {
@@ -37,6 +39,7 @@ object Interfaces {
   /* instruction fetch stage interface*/
   case class IfCtrlIO() extends ControlIO {
     val pcSel = Input(UInt(ctrlSize))
+    val fence = Input(Bool())
   }
 
   case class IfPipeIO() extends PipeLineIO {
@@ -183,6 +186,7 @@ object Interfaces {
     val isHalfWord = Bool()
     val isByte = Bool()
     val isUnsigned = Bool()
+    val fence = Bool()
   }
 
   case class CtrlMiscIO() extends Bundle {
@@ -273,6 +277,7 @@ object Interfaces {
   // exe stage interface
   case class ExCtrlIO() extends ControlIO {
     val rfWen = Output(Bool())
+    val fence = Output(Bool())
   }
 
   case class ExPipeIO() extends PipeLineIO {
@@ -285,6 +290,7 @@ object Interfaces {
   case class MemCtrlIO() extends ControlIO {
     val decode = Output(new DecodeIO)
     val rdData = Output(UInt(xprWidth))
+    val fence = Output(Bool())
   }
 
   case class MemPipeIO() extends PipeLineIO {

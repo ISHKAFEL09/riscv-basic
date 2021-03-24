@@ -22,8 +22,8 @@ case class Decoder() extends Module {
     Array(
       Instruction.BUBBLE -> List(InstrType.typeR, AluOpType.add, InstrFlag.nop),
 
-      Instruction.FENCE -> List(InstrType.typeR, AluOpType.add, InstrFlag.notReady),
-      Instruction.FENCE_I -> List(InstrType.typeR, AluOpType.add, InstrFlag.notReady),
+      Instruction.FENCE -> List(InstrType.typeR, AluOpType.add, InstrFlag.isFence),
+      Instruction.FENCE_I -> List(InstrType.typeR, AluOpType.add, InstrFlag.isFence),
 
       Instruction.ADDI -> List(InstrType.typeI, AluOpType.add, InstrFlag.nop),
       Instruction.SLTI -> List(InstrType.typeI, AluOpType.comp, InstrFlag.nop),
@@ -154,6 +154,8 @@ case class Decoder() extends Module {
   io.decode.isHalfWord := hasFlag(InstrFlag.isHalfWord)
   io.decode.isByte := hasFlag(InstrFlag.isByte)
   io.decode.isUnsigned := hasFlag(InstrFlag.isUnsigned)
+
+  io.decode.fence := hasFlag(InstrFlag.isFence)
 }
 
 object Decoder extends App {

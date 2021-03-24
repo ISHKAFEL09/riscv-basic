@@ -84,6 +84,8 @@ case class Control() extends Module {
     hasException -> PCSel.exception,
     decoder.io.decode.isSystem -> PCSel.system
   ))
+
+  io.ifStage.fence := decoder.io.decode.fence || io.exStage.fence || io.memStage.fence
 }
 
 object Control extends App {

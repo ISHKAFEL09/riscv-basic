@@ -87,6 +87,7 @@ package object cod {
       val isHalfWord = (1 << 7).U
       val isUnsigned = (1 << 8).U
       val isByte = (1 << 9).U
+      val isFence = (1 << 10).U
     }
 
     object ImmType {

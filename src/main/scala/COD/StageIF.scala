@@ -40,17 +40,19 @@ case class StageIF() extends Module
 
   pipeRegs.valid := false.B
   when (!io.ctrl.stall) {
-    when (io.ctrl.flush) {
+    when (io.ctrl.flush || io.ctrl.fence) {
       pipeRegs.instr := BUBBLE.U
     } otherwise {
       pipeRegs := pipeBundle
       pipeRegs.valid := true.B
     }
-    pc := pcMux
+    when (!io.ctrl.fence) {
+      pc := pcMux
+    }
   }
 
   npc.io.pc := pcMux
-  npc.io.stall := io.ctrl.stall
+  npc.io.stall := io.ctrl.stall || io.ctrl.fence
   npc.io.update := io.misc.branchCheck.update
   npc.io.pcIndex := io.misc.branchCheck.pcIndex
 
@@ -60,6 +62,8 @@ case class StageIF() extends Module
   io.misc.imem.req.bits.wr := false.B
   io.misc.imem.req.bits.addr := pc
   io.misc.imem.req.bits.wdata := DontCare
+  io.misc.imem.req.bits.mask := DontCare
+  io.misc.imem.req.bits.fence := DontCare
   io.ctrl.instr := DontCare
 }
 

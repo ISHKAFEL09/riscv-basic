@@ -56,6 +56,7 @@ case class StageEx() extends Module {
   }
 
   io.pipe := pipeReg
+  io.ctrl.fence := io.lastPipe.decode.fence
 }
 
 object StageEx extends App {

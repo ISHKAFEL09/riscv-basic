@@ -35,6 +35,10 @@ case class StageMem() extends Module {
   val memReq = io.misc.dmm.req.bits
   memReq.wr := io.lastPipe.decode.memWen
   memReq.addr := io.lastPipe.aluOut
+  memReq.mask := MuxCase(Fill(xprWidth.get / 8, true.B), Seq(
+    io.ctrl.decode.isHalfWord -> "b11".U,
+    io.ctrl.decode.isByte -> "b1".U
+  )).asTypeOf(chiselTypeOf(memReq.mask))
   memReq.wdata := maskData(io.lastPipe.memWdata)
 
   when (!io.ctrl.stall) {
@@ -52,6 +56,8 @@ case class StageMem() extends Module {
   }
 
   io.pipe := pipeReg
+  io.ctrl.fence := io.lastPipe.decode.fence
+  io.misc.dmm.req.bits.fence := io.lastPipe.decode.fence
 }
 
 object StageMem extends App {

@@ -30,7 +30,10 @@ abstract class MemoryAgent(val bus: MemoryIO)(implicit val clk: Clock) {
       bus.resp.valid.poke(true.B)
       val addr = req.addr.peek().litValue()// >> 2 << 2
       if (req.wr.peek().litToBoolean) {
-        for (i <- 0 to 3) {
+        for {
+          i <- 0 to 3
+          if req.mask(i).peek().litToBoolean
+        } {
           memory(addr + i) = (req.wdata.peek().litValue() >> (8 * i)).toByte
         }
       } else {
@@ -66,6 +69,7 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     testCasePattern = ("""^tests\\isa\\rv32ui-p-[a-z_]+$"""r).findFirstIn(f.getPath)
     if testCasePattern.isDefined
     testCase = testCasePattern.get
+//    if testCase contains "fence"
   } {
     it should s"pass riscv ${testCase}" in {
       test(Tile()).withAnnotations(Seq(WriteVcdAnnotation)) { dut => {
@@ -91,6 +95,15 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
         }
 
         fork {
+          while (true) {
+            if (dut.io.dmm.req.bits.fence.peek().litToBoolean) {
+              dmm foreach (i => imm(i._1) = i._2)
+            }
+            clk.step()
+          }
+        }
+
+        fork {
           var finish = false
           var cycles = 1
           while (!finish) {
@@ -106,6 +119,7 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
           clk.step(3)
           val gp = dut.io.debug.rfData.peek().litValue()
           assert(gp == 1, f"gp is $gp, error code is ${gp >> 1}")
+          assert(cycles > 60)
           println(f"finish test in $cycles cycles")
         }.join()
       }
