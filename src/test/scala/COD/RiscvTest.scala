@@ -31,7 +31,7 @@ abstract class MemoryAgent(val bus: MemoryIO)(implicit val clk: Clock) {
       val addr = req.addr.peek().litValue()// >> 2 << 2
       if (req.wr.peek().litToBoolean) {
         for {
-          i <- 0 to 3
+          i <- 0 until genConfig.xprlen / 8
           if req.mask(i).peek().litToBoolean
         } {
           memory(addr + i) = (req.wdata.peek().litValue() >> (8 * i)).toByte
@@ -39,7 +39,7 @@ abstract class MemoryAgent(val bus: MemoryIO)(implicit val clk: Clock) {
       } else {
         var rdata: BigInt = 0
         if (memory.contains(addr)) {
-          for (i <- (0 to 3).reverse) {
+          for (i <- (0 until genConfig.xprlen / 8).reverse) {
             val m: BigInt = memory(addr + i)
             rdata = (rdata << 8) + (if (m >= 0) m else m + 256)
           }
@@ -56,6 +56,15 @@ abstract class MemoryAgent(val bus: MemoryIO)(implicit val clk: Clock) {
 class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   behavior of "Riscv Test"
 
+  object Statics {
+    var cycles = 0
+    var validCycles = 0
+    var finished = 0
+
+    override def toString: String = f"All test finished, total $cycles cycles, valid $validCycles, " +
+      f"cpi is ${cycles.toFloat / validCycles}"
+  }
+
   def getBytes(f: String): Seq[Byte] = {
     val file = new File(f)
     val in = new FileInputStream(file)
@@ -64,13 +73,15 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     bytes
   }
 
-  for {
+  val testCases = for {
     f <- new File("tests/isa").listFiles()
-    testCasePattern = ("""^tests\\isa\\rv32ui-p-[a-z_]+$"""r).findFirstIn(f.getPath)
+    testCasePattern = ("""^tests\\isa\\rv64ui-p-[a-z_]+$"""r).findFirstIn(f.getPath)
     if testCasePattern.isDefined
     testCase = testCasePattern.get
 //    if testCase contains "fence"
-  } {
+  } yield testCase
+
+  for (testCase <- testCases) {
     it should s"pass riscv ${testCase}" in {
       test(Tile()).withAnnotations(Seq(WriteVcdAnnotation)) { dut => {
         implicit val clk = dut.clock
@@ -113,14 +124,22 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
               finish = true
             }
             cycles += 1
+            Statics.cycles += 1
             assert(cycles < 1000, "Timeout!!!")
           }
-          dut.io.debug.rfIndex.poke(3.U)
+          dut.io.debug.debugRf.rfIndex.poke(3.U)
           clk.step(3)
-          val gp = dut.io.debug.rfData.peek().litValue()
+          val gp = dut.io.debug.debugRf.rfData.peek().litValue()
+          Statics.validCycles += dut.io.debug.status.instrRetire.peek().litValue().toInt
+          dut.reset.poke(true.B)
+          clk.step()
           assert(gp == 1, f"gp is $gp, error code is ${gp >> 1}")
           assert(cycles > 60)
           println(f"finish test in $cycles cycles")
+          Statics.finished += 1
+          if (Statics.finished == testCases.length) {
+            println(Statics)
+          }
         }.join()
       }
       }

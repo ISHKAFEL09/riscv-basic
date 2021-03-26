@@ -32,7 +32,7 @@ case class Csr() extends Module {
         csrRegs(index) := io.req.bits.imm | csrRegs(index)
       }
       is (CsrCmd.csrRcI) {
-        csrRegs(index) := io.req.bits.imm & csrRegs(index)
+        csrRegs(index) := (~io.req.bits.imm).asUInt() & csrRegs(index)
       }
     }
   }

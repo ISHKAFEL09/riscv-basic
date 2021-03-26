@@ -87,7 +87,7 @@ object Interfaces {
     val rf = IdRfWriteIO()
     val branchCheck = IfBranchUpdate()
     val csr = Flipped(CsrIO())
-    val debug = Flipped(DebugRegfileIO())
+    val debug = DebugRegfileIO()
   }
 
   case class IdPipeIO() extends PipeLineIO {
@@ -116,7 +116,7 @@ object Interfaces {
     val dataRs2 = Output(UInt(xprWidth))
     val dataRd = Input(UInt(xprWidth))
     val wren = Input(Bool())
-    val debug = Flipped(DebugRegfileIO())
+    val debug = DebugRegfileIO()
   }
 
   /* npc gen interface */
@@ -186,7 +186,9 @@ object Interfaces {
     val isHalfWord = Bool()
     val isByte = Bool()
     val isUnsigned = Bool()
+    val isWord = Bool()
     val fence = Bool()
+    val immAddPc = Bool()
   }
 
   case class CtrlMiscIO() extends Bundle {
@@ -311,16 +313,21 @@ object Interfaces {
 
   case class WbMiscIO() extends Bundle {
     val rfWrite = Flipped(IdRfWriteIO())
+    val cycles = Output(UInt(xprWidth))
   }
 
   // debug module
   case class DebugRegfileIO() extends Bundle {
-    val rfIndex = Output(UInt(genConfig.nxprbits.W))
-    val rfData = Input(UInt(xprWidth))
+    val rfIndex = Input(UInt(genConfig.nxprbits.W))
+    val rfData = Output(UInt(xprWidth))
+  }
+
+  case class DebugStatusIO() extends Bundle {
+    val instrRetire = Output(UInt(xprWidth))
   }
 
   case class DebugIO() extends Bundle {
-    val d2rf = DebugRegfileIO()
-    val debugRf = Flipped(DebugRegfileIO())
+    val debugRf = DebugRegfileIO()
+    val status = DebugStatusIO()
   }
 }

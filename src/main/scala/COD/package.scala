@@ -26,6 +26,15 @@ package object cod {
     new stage.ChiselStage().emitVerilog(dut, Array("--target-dir", "generated"))
   }
 
+  def signExtend(data: UInt, w0: Int, w1: Int, enable: Bool): UInt = {
+    require(w0 < w1)
+    if (w0 == w1) data
+    else {
+      val ret = Cat(Fill((w1 - w0), data(w0 - 1)), data(w0 - 1, 0))
+      Mux(enable, ret, data)
+    }
+  }
+
   def rtlDebug(msg: String, data: Bits*) = {
     if (genConfig.debugOn) {
       printf(msg, data: _*)
@@ -88,14 +97,16 @@ package object cod {
       val isUnsigned = (1 << 8).U
       val isByte = (1 << 9).U
       val isFence = (1 << 10).U
+      val isWord = (1 << 11).U
+      val immPlusPc = (1 << 12).U
     }
 
     object ImmType {
-      val typeN :: typeI :: typeB :: typeS :: typeU :: typeJ :: addPc :: _ = Enum(10)
+      val typeN :: typeI :: typeB :: typeS :: typeU :: typeJ :: _ = Enum(10)
     }
 
     object CsrCmd {
-      val csrRw :: csrRs :: csrRc :: csrRwI :: csrRsI :: csrRcI :: _ = Enum(10)
+      val _ :: csrRw :: csrRs :: csrRc :: _ :: csrRwI :: csrRsI :: csrRcI :: _ = Enum(10)
     }
 
     val BUBBLE = "b00000000000000000100000000110011"
@@ -220,7 +231,7 @@ package object cod {
   }
 
   sealed abstract class GenConfig() {
-    val xprlen = 32
+    val xprlen = 64
     val nxpr = 32
     val btbSize = 1024
     val nxprbits = log2Up(nxpr)

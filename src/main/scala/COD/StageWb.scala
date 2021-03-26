@@ -31,10 +31,11 @@ case class StageWb() extends Module {
 
   val cycles = RegInit(0.U(xprWidth))
 
-  when (io.lastPipe.decode.valid) {
+  when (io.lastPipe.decode.valid && io.lastPipe.pc =/= BUBBLE.U) {
     cycles := cycles + 1.U
     rtlDebug("[Stage Wb] cycle: %d, pc: %x, instr: %x\n", cycles, io.lastPipe.pc, io.lastPipe.instr)
   }
+  io.misc.cycles := cycles
 }
 
 object StageWb extends App {

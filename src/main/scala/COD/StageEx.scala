@@ -1,6 +1,7 @@
 package cod
 
 import chisel3._
+import chisel3.util._
 import chisel3.experimental.chiselName
 import Interfaces._
 import chisel3.util.MuxLookup
@@ -18,11 +19,12 @@ case class StageEx() extends Module {
 
   val pipeReg = RegInit(0.U.asTypeOf(ExPipeIO()))
 
+  val needTrim = io.lastPipe.decode.isWord && !io.lastPipe.decode.memRen && !io.lastPipe.decode.memWen
   // alu
-  val aluOp1 = io.lastPipe.aluOp1
-  val aluOp2 = io.lastPipe.aluOp2
-  val shiftVal = aluOp2(4, 0)
-  val aluOut = MuxLookup(io.lastPipe.decode.aluOp, 0.U, Seq(
+  val aluOp1 = Mux(needTrim, io.lastPipe.aluOp1(31, 0), io.lastPipe.aluOp1)
+  val aluOp2 = Mux(needTrim, io.lastPipe.aluOp2(31, 0), io.lastPipe.aluOp2)
+  val shiftVal = Mux(needTrim, aluOp2(4, 0), aluOp2(log2Up(xprWidth.get) - 1, 0))
+  val aluOut = signExtend(MuxLookup(io.lastPipe.decode.aluOp, 0.U, Seq(
     AluOpType.and -> (aluOp1 & aluOp2),
     AluOpType.add -> (aluOp1 + aluOp2),
     AluOpType.addu -> (aluOp1 + aluOp2),
@@ -36,8 +38,8 @@ case class StageEx() extends Module {
     AluOpType.xor -> (aluOp1 ^ aluOp2),
     AluOpType.lshift -> (aluOp1 << shiftVal),
     AluOpType.rshift -> (aluOp1 >> shiftVal),
-    AluOpType.rshifta -> (aluOp1.asSInt() >> shiftVal).asUInt()
-  ))
+    AluOpType.rshifta -> (signExtend(aluOp1, 32, xprWidth.get, needTrim).asSInt() >> shiftVal).asUInt()
+  )).asUInt(), 32, xprWidth.get, needTrim)
 
   io.ctrl.instr := io.lastPipe.instr
   io.ctrl.rfWen := io.lastPipe.decode.rfWen

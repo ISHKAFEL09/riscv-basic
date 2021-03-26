@@ -26,6 +26,7 @@ case class Decoder() extends Module {
       Instruction.FENCE_I -> List(InstrType.typeR, AluOpType.add, InstrFlag.isFence),
 
       Instruction.ADDI -> List(InstrType.typeI, AluOpType.add, InstrFlag.nop),
+      Instruction.ADDIW -> List(InstrType.typeI, AluOpType.add, InstrFlag.isWord),
       Instruction.SLTI -> List(InstrType.typeI, AluOpType.comp, InstrFlag.nop),
       Instruction.SLTIU -> List(InstrType.typeI, AluOpType.compu, InstrFlag.nop),
       Instruction.ANDI -> List(InstrType.typeI, AluOpType.and, InstrFlag.nop),
@@ -35,11 +36,15 @@ case class Decoder() extends Module {
       Instruction.SLLI -> List(InstrType.typeI, AluOpType.lshift, InstrFlag.nop),
       Instruction.SRLI -> List(InstrType.typeI, AluOpType.rshift, InstrFlag.nop),
       Instruction.SRAI -> List(InstrType.typeI, AluOpType.rshifta, InstrFlag.nop),
+      Instruction.SLLIW -> List(InstrType.typeI, AluOpType.lshift, InstrFlag.isWord),
+      Instruction.SRLIW -> List(InstrType.typeI, AluOpType.rshift, InstrFlag.isWord),
+      Instruction.SRAIW -> List(InstrType.typeI, AluOpType.rshifta, InstrFlag.isWord),
 
       Instruction.LUI -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.nop),
-      Instruction.AUIPC -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.nop),
+      Instruction.AUIPC -> List(InstrType.typeU, AluOpType.bypass2, InstrFlag.immPlusPc),
 
       Instruction.ADD -> List(InstrType.typeR, AluOpType.add, InstrFlag.nop),
+      Instruction.ADDW -> List(InstrType.typeR, AluOpType.add, InstrFlag.isWord),
       Instruction.SLT -> List(InstrType.typeR, AluOpType.comp, InstrFlag.nop),
       Instruction.SLTU -> List(InstrType.typeR, AluOpType.compu, InstrFlag.nop),
       Instruction.AND -> List(InstrType.typeR, AluOpType.and, InstrFlag.nop),
@@ -47,8 +52,12 @@ case class Decoder() extends Module {
       Instruction.XOR -> List(InstrType.typeR, AluOpType.xor, InstrFlag.nop),
       Instruction.SLL -> List(InstrType.typeR, AluOpType.lshift, InstrFlag.nop),
       Instruction.SRL -> List(InstrType.typeR, AluOpType.rshift, InstrFlag.nop),
+      Instruction.SLLW -> List(InstrType.typeR, AluOpType.lshift, InstrFlag.isWord),
+      Instruction.SRLW -> List(InstrType.typeR, AluOpType.rshift, InstrFlag.isWord),
       Instruction.SUB -> List(InstrType.typeR, AluOpType.sub, InstrFlag.nop),
+      Instruction.SUBW -> List(InstrType.typeR, AluOpType.sub, InstrFlag.isWord),
       Instruction.SRA -> List(InstrType.typeR, AluOpType.rshifta, InstrFlag.nop),
+      Instruction.SRAW -> List(InstrType.typeR, AluOpType.rshifta, InstrFlag.isWord),
 
       Instruction.JAL -> List(InstrType.typeJ, AluOpType.bypass2, InstrFlag.isJump),
       Instruction.JALR -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isJump),
@@ -60,8 +69,11 @@ case class Decoder() extends Module {
       Instruction.BGE -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
       Instruction.BGEU -> List(InstrType.typeB, AluOpType.nop, InstrFlag.isBranch),
 
-      Instruction.LW -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad),
+      Instruction.LD -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad),
+      Instruction.LW -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad | InstrFlag.isWord),
+      Instruction.LWU -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad | InstrFlag.isWord | InstrFlag.isUnsigned),
       Instruction.SW -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore),
+      Instruction.SD -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore),
       Instruction.LH -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad | InstrFlag.isHalfWord),
       Instruction.SH -> List(InstrType.typeS, AluOpType.add, InstrFlag.isStore | InstrFlag.isHalfWord),
       Instruction.LB -> List(InstrType.typeI, AluOpType.add, InstrFlag.isLoad | InstrFlag.isByte),
@@ -134,7 +146,6 @@ case class Decoder() extends Module {
   io.decode.isCsr := hasFlag(InstrFlag.isCsr)
 
   io.decode.immType := MuxCase(ImmType.typeN, Seq(
-    (io.instr === Instruction.AUIPC) -> ImmType.addPc,
     (instrType === InstrType.typeI) -> ImmType.typeI,
     (instrType === InstrType.typeS) -> ImmType.typeS,
     (instrType === InstrType.typeB) -> ImmType.typeB,
@@ -154,8 +165,9 @@ case class Decoder() extends Module {
   io.decode.isHalfWord := hasFlag(InstrFlag.isHalfWord)
   io.decode.isByte := hasFlag(InstrFlag.isByte)
   io.decode.isUnsigned := hasFlag(InstrFlag.isUnsigned)
-
   io.decode.fence := hasFlag(InstrFlag.isFence)
+  io.decode.isWord := hasFlag(InstrFlag.isWord)
+  io.decode.immAddPc := hasFlag(InstrFlag.immPlusPc)
 }
 
 object Decoder extends App {

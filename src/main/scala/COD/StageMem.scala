@@ -24,10 +24,12 @@ case class StageMem() extends Module {
 
   def maskData(data: UInt): UInt = {
     MuxCase(data, Seq(
+      (io.ctrl.decode.isUnsigned & io.ctrl.decode.isWord) -> data(31, 0),
       (io.ctrl.decode.isUnsigned & io.ctrl.decode.isHalfWord) -> data(15, 0),
       (io.ctrl.decode.isUnsigned & io.ctrl.decode.isByte) -> data(7, 0),
-      (!io.ctrl.decode.isUnsigned & io.ctrl.decode.isHalfWord) -> Cat(Fill(16, data(15)), data(15, 0)),
-      (!io.ctrl.decode.isUnsigned & io.ctrl.decode.isByte) -> Cat(Fill(24, data(7)), data(7, 0))
+      (!io.ctrl.decode.isUnsigned & io.ctrl.decode.isWord) -> signExtend(data(31, 0), 32, xprWidth.get, true.B),
+      (!io.ctrl.decode.isUnsigned & io.ctrl.decode.isHalfWord) -> signExtend(data(15, 0), 16, xprWidth.get, true.B),
+      (!io.ctrl.decode.isUnsigned & io.ctrl.decode.isByte) -> signExtend(data(7, 0), 8, xprWidth.get, true.B)
     ))
   }
 
@@ -36,6 +38,7 @@ case class StageMem() extends Module {
   memReq.wr := io.lastPipe.decode.memWen
   memReq.addr := io.lastPipe.aluOut
   memReq.mask := MuxCase(Fill(xprWidth.get / 8, true.B), Seq(
+    io.ctrl.decode.isWord -> "b1111".U,
     io.ctrl.decode.isHalfWord -> "b11".U,
     io.ctrl.decode.isByte -> "b1".U
   )).asTypeOf(chiselTypeOf(memReq.mask))
