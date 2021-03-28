@@ -88,9 +88,9 @@ case class Decoder() extends Module {
       Instruction.CSRRW -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
       Instruction.CSRRS -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
       Instruction.CSRRC -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
-      Instruction.CSRRWI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
-      Instruction.CSRRSI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr),
-      Instruction.CSRRCI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr)
+      Instruction.CSRRWI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr | InstrFlag.noUseRs1),
+      Instruction.CSRRSI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr | InstrFlag.noUseRs1),
+      Instruction.CSRRCI -> List(InstrType.typeI, AluOpType.bypass2, InstrFlag.isCsr | InstrFlag.noUseRs1)
     )
   )
 
@@ -130,7 +130,7 @@ case class Decoder() extends Module {
 
   io.decode.rfWen := !(instrType === InstrType.typeB || instrType === InstrType.typeS)
 
-  val noUseRs1 = instrType === InstrType.typeU || instrType === InstrType.typeJ
+  val noUseRs1 = instrType === InstrType.typeU || instrType === InstrType.typeJ || hasFlag(InstrFlag.noUseRs1)
   io.decode.aluSrc1 := Mux(noUseRs1, AluSrc.nop, AluSrc.rf)
   io.decode.aluSrc2 := MuxCase(AluSrc.rf, Seq(
     hasFlag(InstrFlag.isStore) -> AluSrc.imm,

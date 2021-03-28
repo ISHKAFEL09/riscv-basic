@@ -18,6 +18,7 @@ case class StageID() extends Module {
 
   io.ctrl.exception := false.B
   io.ctrl.valid := io.lastPipe.valid
+  io.misc.csr.writeReq := DontCare
 
   // registers file
   val regFile = Module(new Registers())
@@ -96,6 +97,9 @@ case class StageID() extends Module {
       regPipe.aluOp2 := aluOp2
       regPipe.decode := io.ctrl.decode
       regPipe.memWdata := io.ctrl.fwdRs2
+      regPipe.csrWrite.valid := io.ctrl.decode.isCsr && (instruction(19, 15) =/= 0.U)
+      regPipe.csrWrite.bits.csr := instruction(31, 20)
+      regPipe.csrWrite.bits.data := io.misc.csr.resp.wd
     }
   } otherwise {
     regPipe.decode := 0.U.asTypeOf(new DecodeIO)
@@ -103,11 +107,11 @@ case class StageID() extends Module {
 
   // csr
   val csr = io.misc.csr
-  csr.req.valid := io.ctrl.decode.isCsr
-  csr.req.bits.csr := instruction(31, 20)
-  csr.req.bits.imm := instruction(19, 15)
-  csr.req.bits.rs := aluOp1
-  csr.req.bits.cmd := instruction(14, 12)
+  csr.readReq.valid := io.ctrl.decode.isCsr
+  csr.readReq.bits.csr := instruction(31, 20)
+  csr.readReq.bits.imm := instruction(19, 15)
+  csr.readReq.bits.rs := aluOp1
+  csr.readReq.bits.cmd := instruction(14, 12)
 
   io.ctrl.instr := io.lastPipe.instr
   // pipeline io assign

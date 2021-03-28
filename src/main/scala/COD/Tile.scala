@@ -27,18 +27,22 @@ case class Tile() extends Module {
 
   stageId.io.ctrl <> control.io.idStage
   stageId.io.misc.rf <> stageWb.io.misc.rfWrite
-  stageId.io.misc.csr <> csr.io
+  stageId.io.misc.csr.readReq <> csr.io.readReq
+  stageId.io.misc.csr.resp <> csr.io.resp
   stageId.io.misc.debug <> io.debug.debugRf
   stageId.io.pipe <> stageEx.io.lastPipe
 
   stageEx.io.ctrl <> control.io.exStage
   stageEx.io.pipe <> stageMem.io.lastPipe
+  stageEx.io.misc.csrWrite <> csr.io.writeReq(0)
 
   stageMem.io.ctrl <> control.io.memStage
   stageMem.io.misc.dmm <> io.dmm
   stageMem.io.pipe <> stageWb.io.lastPipe
+  stageMem.io.misc.csrWrite <> csr.io.writeReq(1)
 
   stageWb.io.ctrl <> control.io.wbStage
+  stageWb.io.misc.csrWrite <> csr.io.writeReq(2)
 
   control.io.misc.exception(0) := stageIf.io.ctrl.exception
   control.io.misc.exception(1) := stageId.io.ctrl.exception

@@ -13,6 +13,7 @@ case class StageEx() extends Module {
     val lastPipe = Flipped(IdPipeIO())
     val ctrl = ExCtrlIO()
     val pipe = ExPipeIO()
+    val misc = ExMiscIO()
   })
 
   io.ctrl.exception := false.B
@@ -52,6 +53,7 @@ case class StageEx() extends Module {
       pipeReg.instr := io.lastPipe.instr
       pipeReg.decode := io.lastPipe.decode
       pipeReg.memWdata := io.lastPipe.memWdata
+      pipeReg.csrWrite := io.lastPipe.csrWrite
     }
   } otherwise {
     pipeReg.decode := 0.U.asTypeOf(DecodeIO())
@@ -59,6 +61,7 @@ case class StageEx() extends Module {
 
   io.pipe := pipeReg
   io.ctrl.fence := io.lastPipe.decode.fence
+  io.misc.csrWrite <> io.lastPipe.csrWrite
 }
 
 object StageEx extends App {

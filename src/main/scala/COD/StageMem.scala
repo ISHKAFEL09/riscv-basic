@@ -53,6 +53,7 @@ case class StageMem() extends Module {
       pipeReg.aluOut := io.lastPipe.aluOut
       pipeReg.decode := io.lastPipe.decode
       pipeReg.memRdata := maskData(io.misc.dmm.resp.bits.rdata)
+      pipeReg.csrWrite := io.lastPipe.csrWrite
     }
   } otherwise {
     pipeReg.decode := 0.U.asTypeOf(DecodeIO())
@@ -61,6 +62,7 @@ case class StageMem() extends Module {
   io.pipe := pipeReg
   io.ctrl.fence := io.lastPipe.decode.fence
   io.misc.dmm.req.bits.fence := io.lastPipe.decode.fence
+  io.misc.csrWrite <> io.lastPipe.csrWrite
 }
 
 object StageMem extends App {

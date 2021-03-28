@@ -68,12 +68,19 @@ object Interfaces {
     val imm = UInt(5.W)
   }
 
+  case class CsrWriteReq() extends Bundle {
+    val csr = UInt(12.W)
+    val data = UInt(xprWidth)
+  }
+
   case class CsrResp() extends Bundle {
     val rd = UInt(xprWidth)
+    val wd = UInt(xprWidth)
   }
 
   case class CsrIO() extends Bundle {
-    val req = Flipped(ValidIO(CsrReq()))
+    val readReq = Flipped(ValidIO(CsrReq()))
+    val writeReq = Vec(3, Flipped(ValidIO(CsrWriteReq())))
     val resp = Output(CsrResp())
   }
 
@@ -95,6 +102,7 @@ object Interfaces {
     val aluOp2 = Output(UInt(xprWidth))
     val memWdata = Output(UInt(xprWidth))
     val decode = Output(DecodeIO())
+    val csrWrite = ValidIO(CsrWriteReq())
   }
 
   case class IdCtrlIO() extends ControlIO {
@@ -286,6 +294,11 @@ object Interfaces {
     val memWdata = Output(UInt(xprWidth))
     val decode = Output(DecodeIO())
     val aluOut = Output(UInt(xprWidth))
+    val csrWrite = ValidIO(CsrWriteReq())
+  }
+
+  case class ExMiscIO() extends Bundle {
+    val csrWrite = ValidIO(CsrWriteReq())
   }
 
   // mem stage interface
@@ -299,10 +312,12 @@ object Interfaces {
     val memRdata = Output(UInt(xprWidth))
     val aluOut = Output(UInt(xprWidth))
     val decode = Output(DecodeIO())
+    val csrWrite = ValidIO(CsrWriteReq())
   }
 
   case class MemMiscIO() extends Bundle {
     val dmm = Flipped(MemoryIO())
+    val csrWrite = ValidIO(CsrWriteReq())
   }
 
   // wb stage interface
@@ -314,6 +329,7 @@ object Interfaces {
   case class WbMiscIO() extends Bundle {
     val rfWrite = Flipped(IdRfWriteIO())
     val cycles = Output(UInt(xprWidth))
+    val csrWrite = ValidIO(CsrWriteReq())
   }
 
   // debug module

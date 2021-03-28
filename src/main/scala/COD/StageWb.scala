@@ -36,6 +36,8 @@ case class StageWb() extends Module {
     rtlDebug("[Stage Wb] cycle: %d, pc: %x, instr: %x\n", cycles, io.lastPipe.pc, io.lastPipe.instr)
   }
   io.misc.cycles := cycles
+
+  io.misc.csrWrite <> io.lastPipe.csrWrite
 }
 
 object StageWb extends App {

@@ -1,29 +1,27 @@
 package cod
 
+import SimLib._
 import chisel3._
-import chisel3.util._
-import org.scalatest.flatspec.AnyFlatSpec
 import chiseltest._
 import chiseltest.experimental.TestOptionBuilder.ChiselScalatestOptionBuilder
 import chiseltest.internal.WriteVcdAnnotation
+import cod.Interfaces._
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import Interfaces._
-import SimLib._
-import java.io._
 
-import scala.collection.mutable
-import scala.io.Source
-import scala.util.Random
+import java.io._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 case class MemoryPkg(wr: Boolean, addr: BigInt, data: BigInt) extends Package {
-  override def toString: String = f" ${if (wr) "write" else "read"} addr: ${addr}%x, data: ${data}%x "
+  override def toString: String = f" ${if (wr) "write" else "read"} addr: $addr%x, data: $data%x "
 }
 
 abstract class MemoryAgent(val bus: MemoryIO)(implicit val clk: Clock) {
   def memory: collection.mutable.Map[BigInt, Byte]
   private def req = bus.req.bits
   private def resp = bus.resp.bits
-  def run() = {
+  def run(): Unit = {
     while (true) {
       bus.resp.valid.poke(false.B)
       clk.waitSampling(bus.req.valid)
@@ -73,76 +71,84 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     bytes
   }
 
-  val testCases = for {
-    f <- new File("tests/isa").listFiles()
-    testCasePattern = ("""^tests\\isa\\rv64ui-p-[a-z_]+$"""r).findFirstIn(f.getPath)
-    if testCasePattern.isDefined
-    testCase = testCasePattern.get
-//    if testCase contains "fence"
-  } yield testCase
+  def regressTest(config: GenConfig) = {
+    genConfig = config
 
-  for (testCase <- testCases) {
-    it should s"pass riscv ${testCase}" in {
-      test(Tile()).withAnnotations(Seq(WriteVcdAnnotation)) { dut => {
-        implicit val clk = dut.clock
+    val testCases: Array[String] = for {
+      f <- new File("tests/isa").listFiles()
+      testCasePattern = config.testPattern.findFirstIn(f.getPath)
+      if testCasePattern.isDefined
+      testCase = testCasePattern.get
+      //    if testCase contains "rv64mi-p-csr"
+    } yield testCase
 
-        val imm = collection.mutable.Map.empty[BigInt, Byte]
-        val dmm = collection.mutable.Map.empty[BigInt, Byte]
-        val imageBytes = getBytes(testCase)
-        for (i <- imageBytes.indices) {
-          imm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
-          dmm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
-        }
+    for (testCase <- testCases) {
+      it should s"pass riscv $testCase" in {
+        test(Tile()).withAnnotations(Seq(WriteVcdAnnotation)) { dut => {
+          implicit val clk: Clock = dut.clock
 
-        case class ImmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.imm)
-        case class DmmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.dmm)
+          val imm = collection.mutable.Map.empty[BigInt, Byte]
+          val dmm = collection.mutable.Map.empty[BigInt, Byte]
+          val imageBytes = getBytes(testCase)
+          for (i <- imageBytes.indices) {
+            imm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
+            dmm(i + BigInt("80000000", 16) - BigInt("1000", 16)) = imageBytes(i)
+          }
 
-        fork {
-          ImmAgent(imm).run()
-        }
+          case class ImmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.imm)
+          case class DmmAgent(memory: collection.mutable.Map[BigInt, Byte]) extends MemoryAgent(dut.io.dmm)
 
-        fork {
-          DmmAgent(dmm).run()
-        }
+          fork {
+            ImmAgent(imm).run()
+          }
 
-        fork {
-          while (true) {
-            if (dut.io.dmm.req.bits.fence.peek().litToBoolean) {
-              dmm foreach (i => imm(i._1) = i._2)
+          fork {
+            DmmAgent(dmm).run()
+          }
+
+          fork {
+            while (true) {
+              if (dut.io.dmm.req.bits.fence.peek().litToBoolean) {
+                dmm foreach (i => imm(i._1) = i._2)
+              }
+              clk.step()
             }
-            clk.step()
           }
-        }
 
-        fork {
-          var finish = false
-          var cycles = 1
-          while (!finish) {
-            clk.step()
-            val pc = dut.io.imm.req.bits.addr.peek().litValue()
-            if (pc.toInt == genConfig.SystemCallAddress.toInt) {
-              finish = true
+          fork {
+            var finish = false
+            var cycles = 1
+            while (!finish) {
+              clk.step()
+              val pc = dut.io.imm.req.bits.addr.peek().litValue()
+              if (pc.toInt == genConfig.SystemCallAddress.toInt) {
+                finish = true
+              }
+              cycles += 1
+              Statics.cycles += 1
+              assert(cycles < 1000, "Timeout!!!")
             }
-            cycles += 1
-            Statics.cycles += 1
-            assert(cycles < 1000, "Timeout!!!")
-          }
-          dut.io.debug.debugRf.rfIndex.poke(3.U)
-          clk.step(3)
-          val gp = dut.io.debug.debugRf.rfData.peek().litValue()
-          Statics.validCycles += dut.io.debug.status.instrRetire.peek().litValue().toInt
-          dut.reset.poke(true.B)
-          clk.step()
-          assert(gp == 1, f"gp is $gp, error code is ${gp >> 1}")
-          assert(cycles > 60)
-          println(f"finish test in $cycles cycles")
-          Statics.finished += 1
-          if (Statics.finished == testCases.length) {
-            println(Statics)
-          }
-        }.join()
-      }
+            dut.io.debug.debugRf.rfIndex.poke(3.U)
+            clk.step(3)
+            val gp = dut.io.debug.debugRf.rfData.peek().litValue()
+            Statics.validCycles += dut.io.debug.status.instrRetire.peek().litValue().toInt
+            dut.reset.poke(true.B)
+            clk.step()
+            assert(gp == 1, f"gp is $gp, error code is ${gp >> 1}")
+            assert(cycles > 60)
+            println(f"finish test in $cycles cycles")
+            Statics.finished += 1
+            if (Statics.finished == testCases.length) {
+              println(Statics)
+            }
+          }.join()
+        }
+        }
       }
     }
   }
+
+//  regressTest(Rv32uiConfig())
+//  regressTest(Rv64uiConfig())
+  regressTest(Rv64miConfig())
 }

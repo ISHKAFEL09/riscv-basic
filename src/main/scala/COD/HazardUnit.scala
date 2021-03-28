@@ -1,9 +1,7 @@
 package cod
 
 import chisel3._
-import chisel3.util._
 import cod.Interfaces._
-import Const._
 
 case class HazardUnit() extends Module {
   val io = IO(HazardIO())
