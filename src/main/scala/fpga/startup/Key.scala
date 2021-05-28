@@ -8,7 +8,7 @@ class Key extends FpgaBasic {
   val led = IO(Output(UInt(4.W)))
 
   withClockAndReset(clock, reset_n) {
-    led := key
+    led := RegNext(key)
   }
 
   debug(key)
