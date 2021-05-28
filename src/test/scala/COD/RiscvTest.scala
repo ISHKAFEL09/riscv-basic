@@ -10,8 +10,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.io._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 
 case class MemoryPkg(wr: Boolean, addr: BigInt, data: BigInt) extends Package {
   override def toString: String = f" ${if (wr) "write" else "read"} addr: $addr%x, data: $data%x "
@@ -71,7 +69,7 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
     bytes
   }
 
-  def regressTest(config: GenConfig) = {
+  def regressTest(config: GenConfig): Unit = {
     genConfig = config
 
     val testCases: Array[String] = for {

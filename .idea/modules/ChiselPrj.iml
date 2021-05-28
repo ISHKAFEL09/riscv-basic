@@ -20,6 +20,9 @@
       <excludeFolder url="file://$MODULE_DIR$/../../src/test/scala/SpinalBeta" />
       <excludeFolder url="file://$MODULE_DIR$/../../target" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/test/scala/RiscvMini" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/scala/cod" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/test/scala/cod" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/test/scala/SimLib" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
