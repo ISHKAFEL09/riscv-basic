@@ -76,8 +76,8 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       f <- new File("tests/isa").listFiles()
       testCasePattern = config.testPattern.findFirstIn(f.getPath)
       if testCasePattern.isDefined
-      testCase = testCasePattern.get
-      //    if testCase contains "rv64mi-p-csr"
+      testCase: String = testCasePattern.get
+      if testCase endsWith "rv64ui-p-srl"
     } yield testCase
 
     for (testCase <- testCases) {
@@ -147,6 +147,6 @@ class RiscvTest extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   }
 
 //  regressTest(Rv32uiConfig())
-//  regressTest(Rv64uiConfig())
-  regressTest(Rv64miConfig())
+  regressTest(Rv64uiConfig())
+//  regressTest(Rv64miConfig())
 }

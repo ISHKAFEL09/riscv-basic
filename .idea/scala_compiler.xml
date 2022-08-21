@@ -8,12 +8,15 @@
       </parameters>
     </profile>
     <profile name="sbt 2" modules="ChiselPrj">
-      <option name="postfixOps" value="true" />
+      <option name="reflectiveCalls" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
       <parameters>
-        <parameter value="-Xsource:2.11" />
+        <parameter value="-Xcheckinit" />
+        <parameter value="-P:chiselplugin:genBundleElements" />
       </parameters>
       <plugins>
-        <plugin path="C:\Users\Administrator\AppData\Local\Coursier\cache\v1\https\mirrors.huaweicloud.com\repository\maven\org\scalamacros\paradise_2.12.1\2.1.0\paradise_2.12.1-2.1.0.jar" />
+        <plugin path="C:\Users\Administrator\AppData\Local\Coursier\Cache\v1\https\mirrors.huaweicloud.com\repository\maven\edu\berkeley\cs\chisel3-plugin_2.13.8\3.5.1\chisel3-plugin_2.13.8-3.5.1.jar" />
       </plugins>
     </profile>
   </component>

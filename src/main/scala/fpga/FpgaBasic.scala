@@ -7,10 +7,15 @@ import firrtl.annotations.Annotation
 import firrtl.transforms.DontTouchAnnotation
 
 @chiselName
-class FpgaBasic extends RawModule {
-  val clock = IO(Input(Clock()))
-  val reset = IO(Input(Bool()))
-  val reset_n = !reset
+class FpgaBasic extends MultiIOModule {
+  val clock2 = IO(Input(Bool()))
+  val reset_n = !reset.asBool
+  val din = IO(Input(Bool()))
+  val dout1 = IO(Output(Bool()))
+
+  withClock(clock2.asClock)) {
+    dout1 := RegNext(din)
+  }
 
   def debug(data: Data) = {
     annotate(new ChiselAnnotation {
