@@ -22,7 +22,6 @@
       <excludeFolder url="file://$MODULE_DIR$/../../src/test/scala/RiscvMini" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/test/scala/cod" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/test/scala/SimLib" />
-      <excludeFolder url="file://$MODULE_DIR$/../../src/main/scala/cod" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/main/scala/fpga/cpu" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/main/scala/fpga/netstack" />
       <excludeFolder url="file://$MODULE_DIR$/../../src/main/scala/fpga/startup" />
@@ -31,6 +30,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../../test_run_dir" />
       <excludeFolder url="file://$MODULE_DIR$/../../tests" />
       <excludeFolder url="file://$MODULE_DIR$/../../generated" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/scala/cod" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -41,11 +41,11 @@
     <orderEntry type="library" name="sbt: com.lihaoyi:os-lib_2.13:0.8.0:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="sbt: com.lihaoyi:utest_2.13:0.7.9:jar" level="project" />
     <orderEntry type="library" name="sbt: com.thoughtworks.paranamer:paranamer:2.8:jar" level="project" />
-    <orderEntry type="library" name="sbt: edu.berkeley.cs:chisel3-core_2.13:3.5.1:jar" level="project" />
-    <orderEntry type="library" name="sbt: edu.berkeley.cs:chisel3-macros_2.13:3.5.1:jar" level="project" />
-    <orderEntry type="library" name="sbt: edu.berkeley.cs:chisel3_2.13:3.5.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:chisel3-core_2.13:3.5.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:chisel3-macros_2.13:3.5.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:chisel3_2.13:3.5.3:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="sbt: edu.berkeley.cs:chiseltest_2.13:0.5.1:jar" level="project" />
-    <orderEntry type="library" name="sbt: edu.berkeley.cs:firrtl_2.13:1.5.1:jar" level="project" />
+    <orderEntry type="library" name="sbt: edu.berkeley.cs:firrtl_2.13:1.5.3:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="sbt: edu.berkeley.cs:treadle_2.13:1.5.1:jar" level="project" />
     <orderEntry type="library" name="sbt: io.github.alexarchambault:data-class_2.13:0.2.5:jar" level="project" />
     <orderEntry type="library" name="sbt: joda-time:joda-time:2.10.1:jar" level="project" />

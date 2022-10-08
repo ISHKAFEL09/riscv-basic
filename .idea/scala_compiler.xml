@@ -16,7 +16,7 @@
         <parameter value="-P:chiselplugin:genBundleElements" />
       </parameters>
       <plugins>
-        <plugin path="C:\Users\Administrator\AppData\Local\Coursier\Cache\v1\https\mirrors.huaweicloud.com\repository\maven\edu\berkeley\cs\chisel3-plugin_2.13.8\3.5.1\chisel3-plugin_2.13.8-3.5.1.jar" />
+        <plugin path="C:\Users\Administrator\AppData\Local\Coursier\Cache\v1\https\mirrors.huaweicloud.com\repository\maven\edu\berkeley\cs\chisel3-plugin_2.13.8\3.5.3\chisel3-plugin_2.13.8-3.5.3.jar" />
       </plugins>
     </profile>
   </component>

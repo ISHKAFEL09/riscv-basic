@@ -30,6 +30,25 @@ class Ctrl2DataIO extends Bundle {
   val xcptFPU = Output(Bool())
   val xcptSysCall = Output(Bool())
   val eret = Output(Bool())
+  val dcacheMiss = Output(Bool())
+  // from datapath
+  val bitHit = Input(Bool())
+  val inst = Input(UInt(32.W))
+  val brEq = Input(Bool())
+  val brLt = Input(Bool())
+  val brLtu = Input(Bool())
+  val divResultVal = Input(Bool())
+  val divRdy = Input(Bool())
+  val mulResultVal = Input(Bool())
+  val exWrAddr = Input(UInt(5.W))
+  val exception = Input(Bool())
+  val status = Input(UInt(8.W))
+  val sbSet = Input(Bool())
+  val sbSetA = Input(UInt(5.W))
+  val sbClr0 = Input(Bool())
+  val sbClr0Addr = Input(UInt(5.W))
+  val sbClr1 = Input(Bool())
+  val sbClr1Addr = Input(UInt(5.W))
 }
 
 class CtrlPath {
